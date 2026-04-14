@@ -36,11 +36,6 @@ export function RoleSelectionPage() {
           desc="Sell on the platform. Complete onboarding and wait for approval."
           to="/register?role=vendor"
         />
-        <RoleCard
-          title="Admin"
-          desc="Review vendors, manage users. Create via backend seed script."
-          to="/login"
-        />
       </div>
     </div>
   );
