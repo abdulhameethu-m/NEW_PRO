@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../context/authStore";
+import { Footer } from "./Footer";
 
 export function Layout() {
   const user = useAuthStore((s) => s.user);
@@ -7,7 +8,7 @@ export function Layout() {
   const nav = useNavigate();
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link to="/" className="font-semibold tracking-tight">
@@ -45,9 +46,10 @@ export function Layout() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
 }
