@@ -217,6 +217,18 @@ class ProductRepository {
     ]);
   }
 
+  async countDocuments(query = {}) {
+    return await Product.countDocuments(query);
+  }
+
+  async getTopProducts(limit = 5) {
+    return await Product.find({ status: "APPROVED", isActive: true })
+      .sort({ "analytics.totalRevenue": -1, "analytics.salesCount": -1, createdAt: -1 })
+      .limit(limit)
+      .select("name category price analytics ratings status isActive")
+      .exec();
+  }
+
   // Update views count
   async incrementViews(productId) {
     return await Product.findByIdAndUpdate(

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { BackButton } from "../components/BackButton";
-import * as productService from "../services/productService";
+import { Link } from "react-router-dom";
+import { approveProduct, getProductStats, listProducts, rejectProduct } from "../services/adminApi";
+import { StatusBadge } from "../components/StatusBadge";
 
 function normalizeError(err) {
   return err?.response?.data?.message || err?.message || "Request failed";
@@ -9,27 +10,28 @@ function normalizeError(err) {
 export function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState([]);
   const [error, setError] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [rejectReason, setRejectReason] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [status, setStatus] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [busyId, setBusyId] = useState("");
 
   async function refresh() {
-    setError("");
     setLoading(true);
+    setError("");
     try {
       const [productsRes, statsRes] = await Promise.all([
-        productService.getPendingProducts({ page, limit: 10 }),
-        productService.getProductStats(),
+        listProducts({ page, limit: 10, ...(status ? { status } : {}) }),
+        getProductStats(),
       ]);
       setProducts(productsRes.data.products);
-      setTotalPages(productsRes.data.pagination.pages);
-      setStats(statsRes.data);
-    } catch (e) {
-      setError(normalizeError(e));
+      setTotalPages(productsRes.data.pagination.pages || 1);
+      setStats(statsRes.data.countByStatus || []);
+    } catch (err) {
+      setError(normalizeError(err));
     } finally {
       setLoading(false);
     }
@@ -37,292 +39,186 @@ export function AdminProductsPage() {
 
   useEffect(() => {
     refresh();
-  }, [page]);
+  }, [page, status]);
 
-  async function approve(productId) {
+  async function handleApprove(productId) {
     if (!window.confirm("Approve this product?")) return;
-    setIsSubmitting(true);
+    setBusyId(productId);
     try {
-      await productService.approveProduct(productId);
-      setError("");
+      await approveProduct(productId);
       setSelectedProduct(null);
+      setRejectReason("");
       await refresh();
-    } catch (e) {
-      setError(normalizeError(e));
+    } catch (err) {
+      setError(normalizeError(err));
     } finally {
-      setIsSubmitting(false);
+      setBusyId("");
     }
   }
 
-  async function reject(productId) {
+  async function handleReject(productId) {
     if (!rejectReason.trim()) {
       setError("Please provide a rejection reason");
       return;
     }
     if (!window.confirm("Reject this product?")) return;
-    setIsSubmitting(true);
+    setBusyId(productId);
     try {
-      await productService.rejectProduct(productId, rejectReason);
-      setError("");
-      setRejectReason("");
+      await rejectProduct(productId, rejectReason);
       setSelectedProduct(null);
+      setRejectReason("");
       await refresh();
-    } catch (e) {
-      setError(normalizeError(e));
+    } catch (err) {
+      setError(normalizeError(err));
     } finally {
-      setIsSubmitting(false);
+      setBusyId("");
     }
   }
 
-  if (loading && !products.length)
-    return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center">
-        <div className="text-sm text-slate-600">Loading products...</div>
-      </div>
-    );
-
   return (
-    <div className="grid gap-4 sm:gap-6 px-3 sm:px-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Product Management</h1>
-          <p className="mt-1 text-sm text-slate-600">Review and approve seller products</p>
-        </div>
-        <BackButton fallbackTo="/dashboard/admin" />
-      </div>
-
-      {/* Statistics */}
-      {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-          {stats.countByStatus.map((item) => (
-            <div key={item._id} className="rounded-lg border bg-white p-4 shadow-sm">
-              <div className="text-xs font-medium text-slate-500">{item._id}</div>
-              <div className="mt-2 text-2xl font-bold text-slate-900">{item.count}</div>
-            </div>
+    <div className="grid gap-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setStatus("")}
+            className={`rounded-xl px-3 py-2 text-sm font-medium ${status === "" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950" : "border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-200"}`}
+          >
+            All
+          </button>
+          {["PENDING", "APPROVED", "REJECTED"].map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setStatus(value)}
+              className={`rounded-xl px-3 py-2 text-sm font-medium ${status === value ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950" : "border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-200"}`}
+            >
+              {value}
+            </button>
           ))}
         </div>
-      )}
+        <Link
+          to="/admin/products/create"
+          className="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          Create product
+        </Link>
+      </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      <div className="grid gap-4 sm:grid-cols-3">
+        {stats.map((item) => (
+          <div key={item._id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{item._id}</div>
+            <div className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">{item.count}</div>
+          </div>
+        ))}
+      </div>
+
+      {error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
           {error}
         </div>
-      )}
+      ) : null}
 
-      {/* Products List */}
-      <div className="rounded-lg border bg-white shadow-sm">
-        <div className="border-b px-3 py-3 sm:px-6 hidden lg:block">
-          <div className="grid grid-cols-4 gap-4 text-xs font-medium text-slate-700">
-            <div>PRODUCT</div>
-            <div>SELLER</div>
-            <div>PRICE</div>
-            <div>ACTIONS</div>
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        {loading ? (
+          <div className="grid gap-3 px-4 py-4">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="h-16 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+            ))}
           </div>
-        </div>
-
-        {products.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-500">
-            No pending products to review.
-          </div>
-        ) : (
-          <div className="divide-y">
+        ) : products.length ? (
+          <div className="divide-y divide-slate-200 dark:divide-slate-800">
             {products.map((product) => (
               <div key={product._id}>
-                {/* Desktop: Grid layout */}
-                <div className="hidden lg:grid grid-cols-4 gap-4 px-3 py-4 sm:px-6 border-b">
-                  {/* Product Info */}
-                  <div>
-                    <div className="text-sm font-medium text-slate-900">{product.name}</div>
-                    <div className="mt-1 text-xs text-slate-500">{product.SKU}</div>
+                <div className="grid gap-3 px-4 py-4 lg:grid-cols-[1.4fr_1fr_.7fr_.8fr_1fr] lg:items-center lg:px-5">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-slate-950 dark:text-white">{product.name}</div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{product.SKU} • {product.category}</div>
                   </div>
-
-                  {/* Seller Info */}
-                  <div>
-                    <div className="text-sm text-slate-700">{product.sellerId?.companyName || "—"}</div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {product.createdBy?.email || "—"}
-                    </div>
+                  <div className="text-sm text-slate-600 dark:text-slate-300">
+                    {product.sellerId?.companyName || product.createdBy?.name || "Admin"}
                   </div>
-
-                  {/* Price */}
-                  <div>
-                    <div className="text-sm font-medium text-slate-900">${product.price}</div>
-                    {product.discountPrice && (
-                      <div className="mt-1 text-xs text-green-600">
-                        Sale: ${product.discountPrice}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedProduct(product._id)}
-                      className="rounded px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
-                    >
-                      View
+                  <div className="text-sm font-semibold text-slate-950 dark:text-white">${product.price}</div>
+                  <div><StatusBadge value={product.status} /></div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => setSelectedProduct(selectedProduct === product._id ? null : product._id)} className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                      {selectedProduct === product._id ? "Hide" : "Review"}
                     </button>
+                    <Link to={`/admin/products/${product._id}/edit`} className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                      Edit
+                    </Link>
                   </div>
                 </div>
 
-                {/* Mobile: Card layout */}
-                <div className="lg:hidden px-3 py-4 sm:px-6 border-b">
-                  <div className="rounded border border-slate-300 p-3 space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">{product.name}</div>
-                        <div className="text-xs text-slate-500 mt-1">{product.SKU}</div>
-                      </div>
-                      <button
-                        onClick={() => setSelectedProduct(product._id)}
-                        className="rounded px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
-                      >
-                        View
-                      </button>
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      <span className="font-medium">Seller:</span> {product.sellerId?.companyName || "—"}
-                    </div>
-                    <div className="text-sm font-medium text-slate-900">
-                      $ {product.price}
-                      {product.discountPrice && (
-                        <span className="ml-2 text-xs text-green-600">
-                          Sale: ${product.discountPrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {selectedProduct === product._id ? (
+                  <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/50 lg:px-5">
+                    <div className="grid gap-4 xl:grid-cols-[1.3fr_.9fr]">
+                      <div className="space-y-3">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                          <div className="text-sm font-semibold text-slate-950 dark:text-white">Product details</div>
+                          <div className="mt-3 grid gap-2 text-sm text-slate-600 dark:text-slate-300">
+                            <div>{product.description}</div>
+                            <div>Stock: {product.stock}</div>
+                            <div>Created by: {product.createdBy?.email || "Unknown"}</div>
+                            <div>Visibility: {product.isActive ? "Visible" : "Hidden"}</div>
+                          </div>
+                        </div>
 
-                {/* Detail Panel */}
-                {selectedProduct === product._id && (
-                  <div className="border-t dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-4 sm:px-6">
-                    <div className="grid gap-4">
-                      {/* Product Details */}
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-900">Product Details</h3>
-                        <div className="mt-2 space-y-2 text-sm text-slate-700">
-                          <div>
-                            <span className="font-medium">Name:</span> {product.name}
-                          </div>
-                          <div>
-                            <span className="font-medium">Description:</span>{" "}
-                            {product.description}
-                          </div>
-                          <div>
-                            <span className="font-medium">Category:</span> {product.category}{" "}
-                            {product.subCategory && `> ${product.subCategory}`}
-                          </div>
-                          <div>
-                            <span className="font-medium">Stock:</span> {product.stock} units
-                          </div>
-                          <div>
-                            <span className="font-medium">Created:</span>{" "}
-                            {new Date(product.createdAt).toLocaleDateString()}
-                          </div>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                          {(product.images || []).map((image, idx) => (
+                            <div key={image.url + idx} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                              <img src={image.url} alt={image.altText || product.name} className="h-28 w-full object-cover" />
+                            </div>
+                          ))}
                         </div>
                       </div>
 
-                      {/* Images Preview */}
-                      {product.images?.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-900">Images</h4>
-                          <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                            {product.images.map((img, idx) => (
-                              <div
-                                key={idx}
-                                className="overflow-hidden rounded border bg-slate-100"
-                              >
-                                <img
-                                  src={img.url}
-                                  alt={img.altText || "Product"}
-                                  className="h-24 w-full object-cover"
-                                  onError={(e) => {
-                                    e.target.src =
-                                      "https://via.placeholder.com/150?text=Image+Error";
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Rejection Reason Input */}
-                      <div>
-                        <label className="text-sm font-medium text-slate-700">
-                          Rejection Reason (if rejecting)
-                        </label>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <div className="text-sm font-semibold text-slate-950 dark:text-white">Moderation</div>
                         <textarea
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
-                          placeholder="Provide clear feedback to the seller..."
-                          className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                          rows={3}
+                          placeholder="Reason for rejection"
+                          className="mt-3 min-h-28 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                         />
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => approve(product._id)}
-                          disabled={isSubmitting}
-                          className="rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                        >
-                          {isSubmitting ? "Processing..." : "✓ Approve"}
-                        </button>
-                        <button
-                          onClick={() => reject(product._id)}
-                          disabled={isSubmitting || !rejectReason.trim()}
-                          className="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                        >
-                          {isSubmitting ? "Processing..." : "✗ Reject"}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedProduct(null);
-                            setRejectReason("");
-                          }}
-                          disabled={isSubmitting}
-                          className="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Cancel
-                        </button>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={busyId === product._id || product.status === "APPROVED"}
+                            onClick={() => handleApprove(product._id)}
+                            className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyId === product._id}
+                            onClick={() => handleReject(product._id)}
+                            className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"
+                          >
+                            Reject
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
+        ) : (
+          <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">No products found.</div>
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs sm:text-sm text-slate-600">
-          <div>
-            Page {page} of {totalPages}
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
-              className="rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+      <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+        <div>Page {page} of {totalPages}</div>
+        <div className="flex gap-2">
+          <button type="button" disabled={page === 1} onClick={() => setPage(Math.max(1, page - 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Previous</button>
+          <button type="button" disabled={page === totalPages} onClick={() => setPage(Math.min(totalPages, page + 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Next</button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

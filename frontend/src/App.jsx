@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { AdminLayout } from "./components/AdminLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleGate } from "./components/RoleGate";
 
@@ -14,8 +15,13 @@ import { VendorOnboardingPage } from "./pages/VendorOnboardingPage";
 import { VendorStatusPage } from "./pages/VendorStatusPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { AdminVendorDetailsPage } from "./pages/AdminVendorDetailsPage";
+import { AdminUsersPage } from "./pages/AdminUsersPage";
+import { AdminSellersPage } from "./pages/AdminSellersPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { AdminProductsPage } from "./pages/AdminProductsPage";
+import { AdminOrdersPage } from "./pages/AdminOrdersPage";
+import { AdminAnalyticsPage } from "./pages/AdminAnalyticsPage";
+import { AdminSettingsPage } from "./pages/AdminSettingsPage";
 import { SellerProductsPage } from "./pages/SellerProductsPage";
 import { ProductFormPage } from "./pages/ProductFormPage";
 import { ProductDetailsPage } from "./pages/ProductDetailsPage";
@@ -60,11 +66,21 @@ export default function App() {
           </Route>
 
           <Route element={<RoleGate roles={["admin"]} />}>
-            <Route path="/dashboard/admin" element={<AdminDashboardPage />} />
+            <Route path="/dashboard/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/dashboard/admin/vendor/:id" element={<AdminVendorDetailsPage />} />
-            <Route path="/admin/products" element={<AdminProductsPage />} />
-            <Route path="/admin/products/create" element={<ProductFormPage />} />
-            <Route path="/admin/products/:productId/edit" element={<ProductFormPage />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboardPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="sellers" element={<AdminSellersPage />} />
+              <Route path="sellers/:id" element={<AdminVendorDetailsPage />} />
+              <Route path="products" element={<AdminProductsPage />} />
+              <Route path="products/create" element={<ProductFormPage />} />
+              <Route path="products/:productId/edit" element={<ProductFormPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+            </Route>
           </Route>
         </Route>
 

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../context/authStore";
 import { UserMenu } from "./UserMenu";
 import { Footer } from "./Footer";
@@ -10,6 +10,10 @@ import { useDarkMode } from "../hooks/useDarkMode";
 export function Layout() {
   const user = useAuthStore((s) => s.user);
   const [isDarkMode] = useDarkMode();
+  const location = useLocation();
+  const isAdminRoute =
+    location.pathname === "/dashboard/admin" ||
+    location.pathname.startsWith("/admin");
 
   useEffect(() => {
     if (isDarkMode) {
@@ -21,7 +25,8 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900 transition-colors dark:bg-slate-950 dark:text-white">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+      {!isAdminRoute ? (
+        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
         <div className="mx-auto max-w-7xl px-3 py-2 sm:px-4 sm:py-3">
           <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-3">
             <div className="flex min-w-0 items-center justify-between gap-2 md:contents">
@@ -70,13 +75,14 @@ export function Layout() {
             </div>
           </div>
         </div>
-      </header>
+        </header>
+      ) : null}
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:py-8">
+      <main className={isAdminRoute ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:py-8"}>
         <Outlet />
       </main>
 
-      <Footer />
+      {!isAdminRoute ? <Footer /> : null}
     </div>
   );
 }

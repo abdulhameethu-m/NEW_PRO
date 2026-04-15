@@ -37,6 +37,10 @@ async function deleteById(id) {
   return await Vendor.findByIdAndDelete(id).exec();
 }
 
+async function countVendors(query = {}) {
+  return await Vendor.countDocuments(query);
+}
+
 module.exports = {
   findByUserId,
   upsertByUserId,
@@ -44,5 +48,5 @@ module.exports = {
   findById,
   updateById,
   deleteById,
+  countVendors,
 };
-

@@ -27,10 +27,18 @@ async function updateById(id, update) {
   return await User.findByIdAndUpdate(id, { $set: update }, { new: true }).exec();
 }
 
+async function deleteById(id) {
+  return await User.findByIdAndDelete(id).exec();
+}
+
 async function listUsers({ role } = {}) {
   const query = {};
   if (role) query.role = role;
   return await User.find(query).sort({ createdAt: -1 }).exec();
+}
+
+async function countUsers(query = {}) {
+  return await User.countDocuments(query);
 }
 
 module.exports = {
@@ -39,6 +47,7 @@ module.exports = {
   findByPhone,
   findById,
   updateById,
+  deleteById,
   listUsers,
+  countUsers,
 };
-

@@ -3,8 +3,18 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const adminService = require("../services/admin.service");
 const { AppError } = require("../utils/AppError");
 
+const dashboard = asyncHandler(async (req, res) => {
+  const summary = await adminService.getDashboardOverview();
+  return ok(res, summary, "Dashboard loaded");
+});
+
+const analytics = asyncHandler(async (req, res) => {
+  const result = await adminService.getAnalytics();
+  return ok(res, result, "Analytics loaded");
+});
+
 const listVendors = asyncHandler(async (req, res) => {
-  const vendors = await adminService.listVendors();
+  const vendors = await adminService.listVendors({ status: req.query.status });
   return ok(res, vendors, "OK");
 });
 
@@ -14,7 +24,7 @@ const getVendorDetails = asyncHandler(async (req, res) => {
 });
 
 const listUsers = asyncHandler(async (req, res) => {
-  const users = await adminService.listUsers();
+  const users = await adminService.listUsers({ role: req.query.role });
   return ok(res, users, "OK");
 });
 
@@ -23,6 +33,16 @@ const setUserStatus = asyncHandler(async (req, res) => {
   if (!status) throw new AppError("Missing status", 400, "VALIDATION_ERROR");
   const user = await adminService.setUserStatus(req.params.id, status);
   return ok(res, user, "User updated");
+});
+
+const toggleUserBlocked = asyncHandler(async (req, res) => {
+  const user = await adminService.toggleUserBlocked(req.params.id);
+  return ok(res, user, "User status updated");
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+  const result = await adminService.deleteUser(req.params.id);
+  return ok(res, result, "User deleted");
 });
 
 const approveVendor = asyncHandler(async (req, res) => {
@@ -44,13 +64,37 @@ const removeVendor = asyncHandler(async (req, res) => {
   return ok(res, result, "Vendor removed and privileges revoked");
 });
 
+const listOrders = asyncHandler(async (req, res) => {
+  const result = await adminService.listOrders({
+    page: Number(req.query.page || 1),
+    limit: Number(req.query.limit || 20),
+    status: req.query.status,
+    search: req.query.search,
+    sortBy: req.query.sortBy || "createdAt",
+    sortOrder: req.query.sortOrder === "asc" ? 1 : -1,
+  });
+  return ok(res, result, "Orders loaded");
+});
+
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body || {};
+  if (!status) throw new AppError("Missing status", 400, "VALIDATION_ERROR");
+  const order = await adminService.updateOrderStatus(req.params.id, status);
+  return ok(res, order, "Order updated");
+});
+
 module.exports = {
+  dashboard,
+  analytics,
   listVendors,
   getVendorDetails,
+  listUsers,
+  setUserStatus,
+  toggleUserBlocked,
+  deleteUser,
   approveVendor,
   rejectVendor,
   removeVendor,
-  listUsers,
-  setUserStatus,
+  listOrders,
+  updateOrderStatus,
 };
-
