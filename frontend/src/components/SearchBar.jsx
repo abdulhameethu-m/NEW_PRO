@@ -51,32 +51,41 @@ export function SearchBar() {
   }, []);
 
   return (
-    <div className="relative w-full max-w-2xl" ref={searchRef}>
+    <div className="relative w-full" ref={searchRef}>
       <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true">
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <circle cx="9" cy="9" r="5.5" />
+            <path strokeLinecap="round" d="m14 14 3.5 3.5" />
+          </svg>
+        </span>
         <input
           type="text"
-          placeholder="🔍 Search products..."
+          placeholder="Search products..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => searchQuery.trim().length > 0 && setShowResults(true)}
-          className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
+          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => {
               setSearchQuery("");
               setResults([]);
               setShowResults(false);
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xl"
+            className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
           >
-            ✕
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path strokeLinecap="round" d="M5 5l10 10M15 5 5 15" />
+            </svg>
           </button>
         )}
       </div>
 
       {showResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
           {loading && (
             <div className="p-4 text-center text-slate-500">
               Searching...
@@ -101,10 +110,10 @@ export function SearchBar() {
                       setResults([]);
                       setShowResults(false);
                     }}
-                    className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                    className="flex items-center gap-3 p-3 transition hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     <div className="flex-1">
-                      <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
+                      <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {product.name}
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -122,9 +131,9 @@ export function SearchBar() {
                   setResults([]);
                   setShowResults(false);
                 }}
-                className="block p-3 text-center text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-sm border-t border-slate-200 dark:border-slate-700"
+                className="block border-t border-slate-200 p-3 text-center text-sm font-semibold text-blue-600 hover:bg-slate-50 dark:border-slate-700 dark:text-blue-400 dark:hover:bg-slate-700"
               >
-                View all results →
+                View all results
               </Link>
             </>
           )}

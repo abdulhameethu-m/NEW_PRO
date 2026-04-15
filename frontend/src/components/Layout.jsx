@@ -11,7 +11,6 @@ export function Layout() {
   const user = useAuthStore((s) => s.user);
   const [isDarkMode] = useDarkMode();
 
-  // Initialize dark mode on mount
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -21,54 +20,63 @@ export function Layout() {
   }, [isDarkMode]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-white transition-colors">
-      <header className="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            {/* Logo */}
-            <Link to="/" className="font-bold text-lg tracking-tight whitespace-nowrap">
-              UChooseMe
-            </Link>
-            
-            {/* Search Bar */}
-            <div className="flex-1 max-w-sm">
+    <div className="flex min-h-screen flex-col bg-white text-slate-900 transition-colors dark:bg-slate-950 dark:text-white">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="mx-auto max-w-7xl px-3 py-2 sm:px-4 sm:py-3">
+          <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-3">
+            <div className="flex min-w-0 items-center justify-between gap-2 md:contents">
+              <div className="min-w-0 md:row-start-1 md:col-start-1">
+                <Link to="/" className="block truncate text-base font-bold tracking-tight text-slate-950 dark:text-white sm:text-lg">
+                  UChooseMe
+                </Link>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2 md:row-start-1 md:col-start-2 md:justify-self-end">
+                {user && (
+                  <Link
+                    to="/shop"
+                    className="inline-flex rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:px-3"
+                  >
+                    Shop
+                  </Link>
+                )}
+                {user ? (
+                  <UserMenu />
+                ) : (
+                  <>
+                    <Link
+                      className="hidden text-sm text-slate-700 hover:underline dark:text-slate-200 sm:inline"
+                      to="/login"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      className="inline-flex rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      to="/role"
+                    >
+                      Start
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="min-w-0 md:row-start-2 md:col-start-1">
               <SearchBar />
             </div>
-            
-            {/* Location Selector */}
-            <LocationSelector />
-            
-            {/* Right Nav */}
-            <div className="flex items-center gap-3">
-              {user && (
-                <Link to="/shop" className="text-sm text-slate-700 hover:text-slate-900 hover:underline whitespace-nowrap hidden sm:inline">
-                  Shop
-                </Link>
-              )}
-              {user ? (
-                <UserMenu />
-              ) : (
-                <>
-                  <Link className="text-sm text-slate-700 hover:underline whitespace-nowrap hidden sm:inline" to="/login">
-                    Login
-                  </Link>
-                  <Link
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 whitespace-nowrap"
-                    to="/role"
-                  >
-                    Get started
-                  </Link>
-                </>
-              )}
+
+            <div className="min-w-0 md:row-start-2 md:col-start-2 md:w-[16rem]">
+              <LocationSelector />
             </div>
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:py-8">
         <Outlet />
       </main>
+
       <Footer />
     </div>
   );
 }
-

@@ -101,7 +101,7 @@ export function UserMenu() {
       <button
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all ${
+        className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 transition-all sm:px-3 ${
           isOpen
             ? "border-blue-300 bg-blue-50 shadow-md"
             : "border-slate-200 bg-white hover:bg-slate-50"
@@ -118,7 +118,7 @@ export function UserMenu() {
         </div>
 
         {/* User Name (Hidden on mobile) */}
-        <span className="hidden text-sm font-medium text-slate-700 sm:inline">
+        <span className="hidden max-w-[8rem] truncate text-sm font-medium text-slate-700 sm:inline">
           {user.name}
         </span>
 

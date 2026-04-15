@@ -7,7 +7,7 @@ export function LocationSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("Layout Road, Kadampadi, Tamil Nadu");
-  const [selectedCoords, setSelectedCoords] = useState(null); // { latitude, longitude }
+  const [selectedCoords, setSelectedCoords] = useState(null);
 
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectError, setDetectError] = useState("");
@@ -89,11 +89,9 @@ export function LocationSelector() {
           e.preventDefault();
           last.focus();
         }
-      } else {
-        if (active === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      } else if (active === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
 
@@ -117,13 +115,11 @@ export function LocationSelector() {
   };
 
   const reverseGeocode = async ({ latitude, longitude }) => {
-    // OSM Nominatim reverse geocoding
-    // Note: Browser requests can be rate-limited; handle failures gracefully.
     const url = new URL("https://nominatim.openstreetmap.org/reverse");
     url.searchParams.set("format", "jsonv2");
     url.searchParams.set("lat", String(latitude));
     url.searchParams.set("lon", String(longitude));
-    url.searchParams.set("zoom", "10"); // city-level-ish
+    url.searchParams.set("zoom", "10");
     url.searchParams.set("addressdetails", "1");
 
     const res = await fetch(url.toString(), {
@@ -180,7 +176,7 @@ export function LocationSelector() {
     "Chennai, Tamil Nadu",
     "Bangalore, Karnataka",
     "Hyderabad, Telangana",
-    "Delhi, National Capital Region"
+    "Delhi, National Capital Region",
   ];
 
   const handleLocationSelect = (location) => {
@@ -203,7 +199,6 @@ export function LocationSelector() {
       setPopularError("");
       setPopularLoading(true);
       try {
-        // Expected backend shape: { locations: string[] } OR string[]
         const res = await api.get("/locations/popular");
         const payload = res?.data;
         const locations = Array.isArray(payload) ? payload : payload?.locations;
@@ -229,13 +224,24 @@ export function LocationSelector() {
 
   return (
     <>
-      {/* Location Display Button */}
       <button
         onClick={openPanel}
-        className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+        type="button"
+        className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
       >
-        <span>📍 {selectedLocation?.length > 30 ? `${selectedLocation.substring(0, 30)}...` : selectedLocation}</span>
-        <span className="text-lg" aria-hidden="true">›</span>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+            <path d="M12 2a6 6 0 0 0-6 6c0 4.7 6 12 6 12s6-7.3 6-12a6 6 0 0 0-6-6Zm0 8.5A2.5 2.5 0 1 1 12 5.5a2.5 2.5 0 0 1 0 5Z" />
+          </svg>
+        </span>
+        <span className="min-w-0 flex-1 truncate text-xs font-medium sm:text-sm">
+          {selectedLocation}
+        </span>
+        <span className="shrink-0 text-slate-400" aria-hidden="true">
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+            <path d="M7.3 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.59 10 7.3 5.7a1 1 0 0 1 0-1.4Z" />
+          </svg>
+        </span>
       </button>
 
       {typeof document !== "undefined"
@@ -244,7 +250,6 @@ export function LocationSelector() {
               className={`fixed inset-0 z-[9999] ${isOpen ? "" : "pointer-events-none"}`}
               aria-hidden={!isOpen}
             >
-              {/* Overlay (blur + dark bg). Clicking outside closes. */}
               <div
                 className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
                   isOpen ? "opacity-100" : "opacity-0"
@@ -253,8 +258,7 @@ export function LocationSelector() {
                 aria-hidden="true"
               />
 
-              {/* Center wrapper */}
-              <div className="absolute inset-0 flex items-center justify-center p-4">
+              <div className="absolute inset-0 flex items-end justify-center p-0 sm:items-center sm:p-4">
                 <div
                   ref={dialogRef}
                   role="dialog"
@@ -262,12 +266,11 @@ export function LocationSelector() {
                   aria-labelledby="select-location-title"
                   tabIndex={-1}
                   onMouseDown={(e) => e.stopPropagation()}
-                  className={`w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10
-                    transition-all duration-200 ease-out
-                    ${isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-1"}`}
+                  className={`w-full max-w-md rounded-t-3xl bg-white shadow-2xl ring-1 ring-black/5 transition-all duration-200 ease-out dark:bg-slate-800 dark:ring-white/10 sm:rounded-2xl ${
+                    isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-1 scale-95 opacity-0"
+                  }`}
                 >
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-700 sm:px-5">
                     <div className="min-w-0">
                       <h2 id="select-location-title" className="text-lg font-semibold text-slate-900 dark:text-white">
                         Select Location
@@ -278,21 +281,24 @@ export function LocationSelector() {
                     </div>
                     <button
                       onClick={closePanel}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       aria-label="Close"
                       type="button"
                     >
-                      ✕
+                      <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                        <path strokeLinecap="round" d="M5 5l10 10M15 5 5 15" />
+                      </svg>
                     </button>
                   </div>
 
-                  {/* Content */}
-                  <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+                  <div className="max-h-[75vh] overflow-y-auto px-4 py-4 sm:px-5">
                     <div className="space-y-5">
-                      {/* Search */}
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true">
-                          🔍
+                          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <circle cx="9" cy="9" r="5.5" />
+                            <path strokeLinecap="round" d="m14 14 3.5 3.5" />
+                          </svg>
                         </span>
                         <input
                           ref={inputRef}
@@ -304,16 +310,17 @@ export function LocationSelector() {
                         />
                       </div>
 
-                      {/* Use Current Location */}
                       <button
                         onClick={handleUseCurrentLocation}
                         disabled={isDetecting}
-                        className="w-full rounded-xl border border-transparent p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-70 hover:border-blue-100 hover:bg-blue-50 dark:hover:bg-slate-700"
+                        className="w-full rounded-xl border border-transparent p-3 text-left transition hover:border-blue-100 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70 dark:hover:bg-slate-700"
                         type="button"
                       >
                         <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
-                          <span className="text-xl" aria-hidden="true">
-                            📍
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-500/10" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="currentColor">
+                              <path d="M12 2a6 6 0 0 0-6 6c0 4.7 6 12 6 12s6-7.3 6-12a6 6 0 0 0-6-6Zm0 8.5A2.5 2.5 0 1 1 12 5.5a2.5 2.5 0 0 1 0 5Z" />
+                            </svg>
                           </span>
                           <span className="font-medium">
                             {isDetecting ? "Detecting location..." : "Use Current Location"}
@@ -324,7 +331,6 @@ export function LocationSelector() {
                         ) : null}
                       </button>
 
-                      {/* Saved Addresses */}
                       <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
                         <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">Saved Addresses</h3>
                         {!user ? (
@@ -342,7 +348,6 @@ export function LocationSelector() {
                         )}
                       </div>
 
-                      {/* Popular Locations */}
                       <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
                         <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Popular Locations</h3>
 
@@ -373,7 +378,6 @@ export function LocationSelector() {
                           </div>
                         )}
 
-                        {/* Fallback local list (only shown if backend returns nothing) */}
                         {!popularLoading && filteredPopular.length === 0 ? (
                           <div className="mt-4">
                             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -397,8 +401,7 @@ export function LocationSelector() {
                     </div>
                   </div>
 
-                  {/* Footer */}
-                  <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-slate-700">
+                  <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-4 py-4 dark:border-slate-700 sm:px-5">
                     <button
                       type="button"
                       onClick={closePanel}

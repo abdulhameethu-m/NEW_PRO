@@ -6,7 +6,6 @@ export function BannerCarousel({ banners = [] }) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const intervalRef = useRef(null);
 
-  // Default banners if none provided
   const displayBanners = useMemo(() => {
     const defaultBanners = [
       {
@@ -96,8 +95,7 @@ export function BannerCarousel({ banners = [] }) {
       aria-label="Promotional banners"
       tabIndex={0}
     >
-      {/* Slides */}
-      <div className="relative h-64 sm:h-80 md:h-96">
+      <div className="relative h-44 sm:h-64 md:h-80 lg:h-96">
         {displayBanners.map((banner, index) => (
           <div
             key={banner.id}
@@ -112,12 +110,11 @@ export function BannerCarousel({ banners = [] }) {
               className="h-full w-full object-cover"
               loading={index === 0 ? "eager" : "lazy"}
             />
-            {/* Text Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-center bg-gradient-to-r from-black/60 to-transparent px-4 sm:px-8">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
+            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-r from-black/70 via-black/30 to-transparent px-4 py-4 sm:justify-center sm:px-8">
+              <h2 className="max-w-[70%] text-xl font-bold text-white sm:text-3xl md:text-4xl">
                 {banner.title}
               </h2>
-              <p className="text-lg sm:text-xl text-yellow-300 font-semibold mt-2">
+              <p className="mt-1 text-sm font-semibold text-yellow-300 sm:mt-2 sm:text-xl">
                 {banner.discount}
               </p>
             </div>
@@ -125,28 +122,30 @@ export function BannerCarousel({ banners = [] }) {
         ))}
       </div>
 
-      {/* Navigation Buttons */}
       <button
         onClick={prevSlide}
         type="button"
         aria-label="Previous slide"
-        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2 text-slate-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800/80 dark:text-white dark:hover:bg-slate-700 sm:left-4"
+        className="absolute left-2 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800/85 dark:text-white dark:hover:bg-slate-700 sm:left-4"
         disabled={slideCount <= 1}
       >
-        <span aria-hidden="true">❮</span>
+        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+          <path d="M12.7 15.7a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 0-1.4l5-5a1 1 0 1 1 1.4 1.4L8.41 10l4.29 4.3a1 1 0 0 1 0 1.4Z" />
+        </svg>
       </button>
       <button
         onClick={nextSlide}
         type="button"
         aria-label="Next slide"
-        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2 text-slate-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800/80 dark:text-white dark:hover:bg-slate-700 sm:right-4"
+        className="absolute right-2 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800/85 dark:text-white dark:hover:bg-slate-700 sm:right-4"
         disabled={slideCount <= 1}
       >
-        <span aria-hidden="true">❯</span>
+        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+          <path d="M7.3 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.59 10 7.3 5.7a1 1 0 0 1 0-1.4Z" />
+        </svg>
       </button>
 
-      {/* Dot Indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+      <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2 sm:bottom-4">
         {displayBanners.map((_, index) => (
           <button
             key={index}

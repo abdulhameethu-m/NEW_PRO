@@ -10,3 +10,16 @@ body {
 body {
   @apply bg-slate-50 text-slate-900;
 }
+
+#root {
+  min-height: 100%;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

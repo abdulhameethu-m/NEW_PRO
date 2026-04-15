@@ -60,9 +60,8 @@ export function HomePage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Category strip */}
-      <div className="-mx-4 sm:mx-0">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="-mx-3 sm:mx-0">
         <CategoryCarousel
           title="Top Categories"
           categories={categories}
@@ -70,17 +69,14 @@ export function HomePage() {
         />
       </div>
 
-      {/* Banner */}
       <BannerCarousel />
 
-      {/* Error */}
       {error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
           {error}
         </div>
       ) : null}
 
-      {/* Sections */}
       <ProductSection
         title="Popular Picks"
         subtitle="Most viewed products right now"
@@ -105,7 +101,6 @@ export function HomePage() {
         viewAllHref="/shop?sortBy=ratings.averageRating&sortOrder=desc"
       />
 
-      {/* Trust badges */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <TrustBadge title="Fast Delivery" detail="Quick shipping to your doorstep" icon="🚚" />
         <TrustBadge title="Secure Payment" detail="Safe and encrypted transactions" icon="🔒" />
@@ -118,7 +113,7 @@ export function HomePage() {
 
 function ProductSection({ title, subtitle, items, loading, viewAllHref }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
@@ -132,7 +127,7 @@ function ProductSection({ title, subtitle, items, loading, viewAllHref }) {
         </Link>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {loading ? (
           Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)
         ) : items?.length ? (
