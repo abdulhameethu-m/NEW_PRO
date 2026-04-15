@@ -76,7 +76,7 @@ export function AdminSellersPage() {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 max-w-full gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <select
           value={status}
@@ -105,10 +105,13 @@ export function AdminSellersPage() {
           ))
         ) : pageItems.length ? (
           pageItems.map((seller) => (
-            <div key={seller._id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div
+              key={seller._id}
+              className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate text-lg font-semibold text-slate-950 dark:text-white">
+                  <div className="truncate text-base font-semibold text-slate-950 dark:text-white sm:text-lg">
                     {seller.companyName || "Unnamed seller"}
                   </div>
                   <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -130,10 +133,10 @@ export function AdminSellersPage() {
                 </div>
               ) : null}
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2 sm:gap-3">
                 <Link
                   to={`/admin/sellers/${seller._id}`}
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
                 >
                   View details
                 </Link>
@@ -141,7 +144,7 @@ export function AdminSellersPage() {
                   type="button"
                   disabled={busyId === seller._id || seller.status === "approved"}
                   onClick={() => handleApprove(seller._id)}
-                  className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="w-full rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                 >
                   Approve
                 </button>
@@ -149,7 +152,7 @@ export function AdminSellersPage() {
                   type="button"
                   disabled={busyId === seller._id || seller.status === "rejected"}
                   onClick={() => handleReject(seller._id)}
-                  className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"
+                  className="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200 sm:w-auto"
                 >
                   Reject
                 </button>
@@ -170,11 +173,25 @@ export function AdminSellersPage() {
 
 function Pagination({ page, totalPages, onChange }) {
   return (
-    <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+    <div className="flex flex-col gap-3 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
       <div>Page {page} of {totalPages}</div>
       <div className="flex gap-2">
-        <button type="button" disabled={page === 1} onClick={() => onChange(Math.max(1, page - 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Previous</button>
-        <button type="button" disabled={page === totalPages} onClick={() => onChange(Math.min(totalPages, page + 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Next</button>
+        <button
+          type="button"
+          disabled={page === 1}
+          onClick={() => onChange(Math.max(1, page - 1))}
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          disabled={page === totalPages}
+          onClick={() => onChange(Math.min(totalPages, page + 1))}
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

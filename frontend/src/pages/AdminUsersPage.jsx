@@ -82,7 +82,7 @@ export function AdminUsersPage() {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 max-w-full gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <input
           value={search}
@@ -100,12 +100,14 @@ export function AdminUsersPage() {
       ) : null}
 
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="hidden grid-cols-[1.4fr_1.1fr_.9fr_.7fr_1fr] gap-4 border-b border-slate-200 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400 lg:grid">
-          <div>User</div>
-          <div>Contact</div>
-          <div>Role</div>
-          <div>Status</div>
-          <div>Actions</div>
+        <div className="hidden overflow-x-auto lg:block">
+          <div className="grid min-w-[780px] grid-cols-[1.4fr_1.1fr_.9fr_.7fr_1fr] gap-4 border-b border-slate-200 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+            <div>User</div>
+            <div>Contact</div>
+            <div>Role</div>
+            <div>Status</div>
+            <div>Actions</div>
+          </div>
         </div>
 
         {loading ? (
@@ -135,7 +137,7 @@ export function AdminUsersPage() {
                     type="button"
                     disabled={busyId === user._id}
                     onClick={() => handleBlock(user)}
-                    className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
                   >
                     {user.status === "disabled" ? "Unblock" : "Block"}
                   </button>
@@ -143,7 +145,7 @@ export function AdminUsersPage() {
                     type="button"
                     disabled={busyId === user._id}
                     onClick={() => handleDelete(user)}
-                    className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"
+                    className="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200 sm:w-auto"
                   >
                     Delete
                   </button>
@@ -163,14 +165,14 @@ export function AdminUsersPage() {
 
 function Pagination({ page, totalPages, onChange }) {
   return (
-    <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+    <div className="flex flex-col gap-3 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
       <div>Page {page} of {totalPages}</div>
       <div className="flex gap-2">
         <button
           type="button"
           disabled={page === 1}
           onClick={() => onChange(Math.max(1, page - 1))}
-          className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto"
         >
           Previous
         </button>
@@ -178,7 +180,7 @@ function Pagination({ page, totalPages, onChange }) {
           type="button"
           disabled={page === totalPages}
           onClick={() => onChange(Math.min(totalPages, page + 1))}
-          className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto"
         >
           Next
         </button>

@@ -12,8 +12,8 @@ export function Topbar({ title, subtitle, onMenuToggle }) {
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
-      <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <button
             type="button"
             onClick={onMenuToggle}
@@ -24,15 +24,15 @@ export function Topbar({ title, subtitle, onMenuToggle }) {
             </svg>
           </button>
           <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight text-slate-950 dark:text-white">{title}</h1>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-slate-950 dark:text-white sm:text-xl">{title}</h1>
             {subtitle ? (
-              <p className="truncate text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+              <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">{subtitle}</p>
             ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden text-right sm:block">
+        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="hidden text-right md:block">
             <div className="text-sm font-medium text-slate-900 dark:text-white">{user?.name || "Admin"}</div>
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{user?.role || "admin"}</div>
           </div>
@@ -42,7 +42,7 @@ export function Topbar({ title, subtitle, onMenuToggle }) {
           <button
             type="button"
             onClick={logout}
-            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:text-sm"
           >
             Logout
           </button>

@@ -47,8 +47,8 @@ export function AdminOrdersPage() {
   }
 
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap gap-2">
+    <div className="grid min-w-0 max-w-full gap-4">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         {["", "Pending", "Shipped", "Delivered"].map((item) => (
           <button
             key={item || "all"}
@@ -95,7 +95,7 @@ export function AdminOrdersPage() {
                       type="button"
                       disabled={busyId === order._id || order.status === nextStatus}
                       onClick={() => handleStatus(order._id, nextStatus)}
-                      className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
                     >
                       {nextStatus}
                     </button>
@@ -109,11 +109,11 @@ export function AdminOrdersPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex flex-col gap-3 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
         <div>Page {page} of {totalPages}</div>
         <div className="flex gap-2">
-          <button type="button" disabled={page === 1} onClick={() => setPage(Math.max(1, page - 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Previous</button>
-          <button type="button" disabled={page === totalPages} onClick={() => setPage(Math.min(totalPages, page + 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Next</button>
+          <button type="button" disabled={page === 1} onClick={() => setPage(Math.max(1, page - 1))} className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto">Previous</button>
+          <button type="button" disabled={page === totalPages} onClick={() => setPage(Math.min(totalPages, page + 1))} className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto">Next</button>
         </div>
       </div>
     </div>

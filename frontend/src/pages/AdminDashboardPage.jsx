@@ -45,28 +45,32 @@ export function AdminDashboardPage() {
   const topProducts = analytics?.topProducts || [];
 
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 max-w-full gap-4 sm:gap-6">
       {error ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
           {error}
         </div>
       ) : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid min-w-0 max-w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Total Users" value={loading ? "..." : totals.users ?? 0} tone="slate" />
         <MetricCard label="Total Sellers" value={loading ? "..." : totals.sellers ?? 0} tone="blue" />
         <MetricCard label="Total Orders" value={loading ? "..." : totals.orders ?? 0} tone="amber" />
-        <MetricCard label="Revenue" value={loading ? "..." : `$${Number(totals.revenue || 0).toLocaleString()}`} tone="emerald" />
+        <MetricCard
+          label="Revenue"
+          value={loading ? "..." : `$${Number(totals.revenue || 0).toLocaleString()}`}
+          tone="emerald"
+        />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between gap-3">
+      <section className="grid min-w-0 max-w-full gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Sales Overview</h2>
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white sm:text-lg">Sales Overview</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">Last 6 recorded revenue periods</p>
             </div>
-            <Link to="/admin/analytics" className="text-sm font-medium text-blue-600 hover:underline">
+            <Link to="/admin/analytics" className="w-full text-sm font-medium text-blue-600 hover:underline sm:w-auto">
               View analytics
             </Link>
           </div>
@@ -76,7 +80,7 @@ export function AdminDashboardPage() {
               <div className="h-56 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
             ) : salesOverview.length ? (
               salesOverview.map((entry) => (
-                <div key={entry.label} className="grid grid-cols-[5rem_1fr_auto] items-center gap-3">
+                <div key={entry.label} className="grid min-w-0 grid-cols-[4.25rem_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {entry.label}
                   </div>
@@ -103,18 +107,18 @@ export function AdminDashboardPage() {
         </div>
 
         <div className="grid gap-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Approval Queue</h2>
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white sm:text-lg">Approval Queue</h2>
             <div className="mt-4 grid gap-3">
               <QueueRow label="Pending sellers" value={queues.pendingSellers ?? 0} href="/admin/sellers" />
               <QueueRow label="Pending products" value={queues.pendingProducts ?? 0} href="/admin/products" />
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Top Products</h2>
-              <Link to="/admin/products" className="text-sm font-medium text-blue-600 hover:underline">
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white sm:text-lg">Top Products</h2>
+              <Link to="/admin/products" className="w-full text-sm font-medium text-blue-600 hover:underline sm:w-auto">
                 Open catalog
               </Link>
             </div>
@@ -158,17 +162,17 @@ function MetricCard({ label, value, tone }) {
   };
 
   return (
-    <div className={`rounded-3xl bg-gradient-to-br p-5 shadow-sm ${tones[tone]}`}>
+    <div className={`rounded-3xl bg-gradient-to-br p-4 shadow-sm sm:p-5 ${tones[tone]}`}>
       <div className="text-sm font-medium opacity-90">{label}</div>
-      <div className="mt-3 text-3xl font-bold tracking-tight">{value}</div>
+      <div className="mt-3 truncate text-2xl font-bold tracking-tight sm:text-3xl">{value}</div>
     </div>
   );
 }
 
 function QueueRow({ label, value, href }) {
   return (
-    <Link to={href} className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800">
-      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{label}</span>
+    <Link to={href} className="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-200 px-4 py-3 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800">
+      <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{label}</span>
       <span className="text-lg font-semibold text-slate-950 dark:text-white">{value}</span>
     </Link>
   );

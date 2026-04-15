@@ -37,23 +37,23 @@ export function AdminAnalyticsPage() {
   const topProducts = analytics?.topProducts || [];
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 max-w-full gap-4">
       {error ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
           {error}
         </div>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid min-w-0 max-w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile label="Revenue" value={`$${Number(stats.revenue || 0).toLocaleString()}`} />
         <StatTile label="Delivered Orders" value={stats.deliveredOrders || 0} />
         <StatTile label="Approved Products" value={stats.approvedProducts || 0} />
         <StatTile label="Approved Sellers" value={stats.sellers || 0} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Revenue timeline</h2>
+      <div className="grid min-w-0 max-w-full gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,1fr)]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white sm:text-lg">Revenue timeline</h2>
           <div className="mt-4 grid gap-3">
             {loading ? (
               <div className="h-56 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
@@ -65,7 +65,9 @@ export function AdminAnalyticsPage() {
                       <div className="text-sm font-semibold text-slate-950 dark:text-white">{entry.label}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{entry.orders} orders</div>
                     </div>
-                    <div className="text-sm font-semibold text-slate-950 dark:text-white">${Number(entry.revenue || 0).toLocaleString()}</div>
+                    <div className="text-sm font-semibold text-slate-950 dark:text-white">
+                      ${Number(entry.revenue || 0).toLocaleString()}
+                    </div>
                   </div>
                 </div>
               ))
@@ -77,8 +79,8 @@ export function AdminAnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Top products</h2>
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white sm:text-lg">Top products</h2>
           <div className="mt-4 grid gap-3">
             {loading ? (
               Array.from({ length: 4 }).map((_, idx) => (
@@ -113,9 +115,9 @@ export function AdminAnalyticsPage() {
 
 function StatTile({ label, value }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
       <div className="text-sm text-slate-500 dark:text-slate-400">{label}</div>
-      <div className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">{value}</div>
+      <div className="mt-2 break-words text-2xl font-bold text-slate-950 dark:text-white sm:text-3xl">{value}</div>
     </div>
   );
 }

@@ -14,17 +14,17 @@ export function Sidebar({ open, onClose }) {
   return (
     <>
       <div
-        className={`fixed inset-0 z-30 bg-slate-950/40 transition-opacity lg:hidden ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-0 z-30 bg-slate-950/40 transition-opacity duration-300 lg:hidden ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
         onClick={onClose}
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform dark:border-slate-800 dark:bg-slate-950 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[17rem] max-w-[85vw] flex-col border-r border-slate-200 bg-white transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-950 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
           <div>
-            <div className="text-lg font-semibold text-slate-950 dark:text-white">Admin Hub</div>
+            <div className="text-base font-semibold text-slate-950 dark:text-white sm:text-lg">Admin Hub</div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Multi-vendor control center</div>
           </div>
           <button

@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { approveProduct, getProductStats, listProducts, rejectProduct } from "../services/adminApi";
+import {
+  approveProduct,
+  getProductStats,
+  listProducts,
+  rejectProduct,
+} from "../services/adminApi";
 import { StatusBadge } from "../components/StatusBadge";
 
 function normalizeError(err) {
@@ -76,9 +81,9 @@ export function AdminProductsPage() {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 max-w-full gap-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => setStatus("")}
@@ -99,16 +104,21 @@ export function AdminProductsPage() {
         </div>
         <Link
           to="/admin/products/create"
-          className="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex w-full justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 sm:w-auto"
         >
           Create product
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid min-w-0 max-w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {stats.map((item) => (
-          <div key={item._id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{item._id}</div>
+          <div
+            key={item._id}
+            className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5"
+          >
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {item._id}
+            </div>
             <div className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">{item.count}</div>
           </div>
         ))}
@@ -134,31 +144,44 @@ export function AdminProductsPage() {
                 <div className="grid gap-3 px-4 py-4 lg:grid-cols-[1.4fr_1fr_.7fr_.8fr_1fr] lg:items-center lg:px-5">
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-slate-950 dark:text-white">{product.name}</div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{product.SKU} • {product.category}</div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {product.SKU} • {product.category}
+                    </div>
                   </div>
                   <div className="text-sm text-slate-600 dark:text-slate-300">
                     {product.sellerId?.companyName || product.createdBy?.name || "Admin"}
                   </div>
                   <div className="text-sm font-semibold text-slate-950 dark:text-white">${product.price}</div>
-                  <div><StatusBadge value={product.status} /></div>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setSelectedProduct(selectedProduct === product._id ? null : product._id)} className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                  <div>
+                    <StatusBadge value={product.status} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedProduct(selectedProduct === product._id ? null : product._id)
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+                    >
                       {selectedProduct === product._id ? "Hide" : "Review"}
                     </button>
-                    <Link to={`/admin/products/${product._id}/edit`} className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                    <Link
+                      to={`/admin/products/${product._id}/edit`}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-center text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+                    >
                       Edit
                     </Link>
                   </div>
                 </div>
 
                 {selectedProduct === product._id ? (
-                  <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/50 lg:px-5">
-                    <div className="grid gap-4 xl:grid-cols-[1.3fr_.9fr]">
+                  <div className="overflow-hidden border-t border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/50 lg:px-5">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(18rem,.9fr)]">
                       <div className="space-y-3">
                         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                           <div className="text-sm font-semibold text-slate-950 dark:text-white">Product details</div>
                           <div className="mt-3 grid gap-2 text-sm text-slate-600 dark:text-slate-300">
-                            <div>{product.description}</div>
+                            <div className="break-words">{product.description}</div>
                             <div>Stock: {product.stock}</div>
                             <div>Created by: {product.createdBy?.email || "Unknown"}</div>
                             <div>Visibility: {product.isActive ? "Visible" : "Hidden"}</div>
@@ -167,8 +190,15 @@ export function AdminProductsPage() {
 
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                           {(product.images || []).map((image, idx) => (
-                            <div key={image.url + idx} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-                              <img src={image.url} alt={image.altText || product.name} className="h-28 w-full object-cover" />
+                            <div
+                              key={image.url + idx}
+                              className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                            >
+                              <img
+                                src={image.url}
+                                alt={image.altText || product.name}
+                                className="h-28 w-full object-cover"
+                              />
                             </div>
                           ))}
                         </div>
@@ -182,12 +212,12 @@ export function AdminProductsPage() {
                           placeholder="Reason for rejection"
                           className="mt-3 min-h-28 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                         />
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
                           <button
                             type="button"
                             disabled={busyId === product._id || product.status === "APPROVED"}
                             onClick={() => handleApprove(product._id)}
-                            className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                            className="w-full rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                           >
                             Approve
                           </button>
@@ -195,7 +225,7 @@ export function AdminProductsPage() {
                             type="button"
                             disabled={busyId === product._id}
                             onClick={() => handleReject(product._id)}
-                            className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"
+                            className="w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200 sm:w-auto"
                           >
                             Reject
                           </button>
@@ -212,11 +242,25 @@ export function AdminProductsPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex flex-col gap-3 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
         <div>Page {page} of {totalPages}</div>
         <div className="flex gap-2">
-          <button type="button" disabled={page === 1} onClick={() => setPage(Math.max(1, page - 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Previous</button>
-          <button type="button" disabled={page === totalPages} onClick={() => setPage(Math.min(totalPages, page + 1))} className="rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700">Next</button>
+          <button
+            type="button"
+            disabled={page === 1}
+            onClick={() => setPage(Math.max(1, page - 1))}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            disabled={page === totalPages}
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 disabled:opacity-50 dark:border-slate-700 sm:w-auto"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
