@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BackButton } from "../components/BackButton";
 import * as vendorService from "../services/vendorService";
 import { LocationPickerMap } from "../components/LocationPickerMap";
 
@@ -169,14 +170,15 @@ export function VendorOnboardingPage() {
   if (loading) return <div className="text-sm text-slate-600">Loading...</div>;
 
   return (
-    <div className="grid gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="grid gap-4 sm:gap-6 px-3 sm:px-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Vendor onboarding</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Vendor onboarding</h1>
           <p className="mt-1 text-slate-600">
             Complete the steps and submit for admin approval.
           </p>
         </div>
+        <BackButton fallbackTo="/" />
         <div className="rounded-xl border bg-white px-4 py-3 text-sm shadow-sm">
           <div className="text-xs text-slate-500">Completed</div>
           <div className="font-semibold">{completed}/4</div>
