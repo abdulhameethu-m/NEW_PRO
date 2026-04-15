@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BackButton } from "../components/BackButton";
 import * as vendorService from "../services/vendorService";
 
 export function VendorStatusPage() {
@@ -47,7 +48,10 @@ export function VendorStatusPage() {
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Vendor Status</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Vendor Status</h1>
+        <BackButton />
+      </div>
       <div className="rounded-2xl border bg-white p-6 shadow-sm">
         <div className="text-sm text-slate-600">Current status</div>
         <div className="mt-2 text-lg font-semibold capitalize">{status}</div>

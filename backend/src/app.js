@@ -15,6 +15,7 @@ const { errorHandler } = require("./middleware/errorHandler");
 const authRoutes = require("./routes/auth.routes");
 const vendorRoutes = require("./routes/vendor.routes");
 const adminRoutes = require("./routes/admin.routes");
+const productRoutes = require("./routes/product.routes");
 
 function createApp() {
   const app = express();
@@ -63,6 +64,7 @@ function createApp() {
   app.use("/api/auth", authRoutes);
   app.use("/api/vendor", vendorRoutes);
   app.use("/api/admin", adminRoutes);
+  app.use("/api/products", productRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

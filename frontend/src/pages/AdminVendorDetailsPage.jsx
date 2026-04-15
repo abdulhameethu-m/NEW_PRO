@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BackButton } from "../components/BackButton";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import * as adminService from "../services/adminService";
 import { resolveApiAssetUrl } from "../utils/resolveUrl";
@@ -82,9 +83,7 @@ export function AdminVendorDetailsPage() {
       <div className="grid gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Vendor details</h1>
-          <Link className="text-sm text-indigo-600 hover:underline" to="/dashboard/admin">
-            Back
-          </Link>
+          <BackButton fallbackTo="/dashboard/admin" />
         </div>
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           {error}
@@ -106,12 +105,7 @@ export function AdminVendorDetailsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            className="rounded-lg border bg-white px-3 py-2 text-sm hover:bg-slate-50"
-            onClick={() => nav("/dashboard/admin")}
-          >
-            Back
-          </button>
+          <BackButton fallbackTo="/dashboard/admin" />
           <button
             className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
             onClick={load}
