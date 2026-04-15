@@ -96,7 +96,7 @@ function ProductCard({ product }) {
 
   return (
     <Link
-      to={`/products/${product._id}`}
+      to={`/product/${product._id}`}
       className="group overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:shadow-lg transition-all duration-300 transform hover:scale-105"
     >
       {/* Image Container */}

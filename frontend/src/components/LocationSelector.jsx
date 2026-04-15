@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuthStore } from "../context/authStore";
 import { api } from "../services/api";
 
@@ -16,7 +17,9 @@ export function LocationSelector() {
   const [popularError, setPopularError] = useState("");
 
   const user = useAuthStore((s) => s.user);
-  const closeBtnRef = useRef(null);
+  const dialogRef = useRef(null);
+  const inputRef = useRef(null);
+  const lastActiveRef = useRef(null);
 
   const closePanel = () => {
     setIsOpen(false);
@@ -28,9 +31,9 @@ export function LocationSelector() {
 
   useEffect(() => {
     if (!isOpen) return;
-    // focus close button for keyboard users
-    const t = setTimeout(() => closeBtnRef.current?.focus?.(), 0);
-    return () => clearTimeout(t);
+    lastActiveRef.current = document.activeElement;
+    const t = window.setTimeout(() => inputRef.current?.focus?.(), 0);
+    return () => window.clearTimeout(t);
   }, [isOpen]);
 
   useEffect(() => {
@@ -45,11 +48,65 @@ export function LocationSelector() {
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e) => {
-      if (e.key === "Escape") closePanel();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closePanel();
+        return;
+      }
+
+      if (e.key !== "Tab") return;
+
+      const root = dialogRef.current;
+      if (!root) return;
+
+      const focusable = root.querySelectorAll(
+        [
+          'a[href]',
+          'button:not([disabled])',
+          'textarea:not([disabled])',
+          'input:not([disabled])',
+          'select:not([disabled])',
+          '[tabindex]:not([tabindex="-1"])',
+        ].join(",")
+      );
+
+      const list = Array.from(focusable).filter(
+        (el) => el && el.offsetParent !== null && !el.hasAttribute("disabled")
+      );
+
+      if (list.length === 0) {
+        e.preventDefault();
+        root.focus();
+        return;
+      }
+
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey) {
+        if (active === first || active === root) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
+
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) return;
+    const el = lastActiveRef.current;
+    if (el && typeof el.focus === "function") {
+      el.focus();
+    }
   }, [isOpen]);
 
   const formatPlace = (parts) => {
@@ -178,156 +235,191 @@ export function LocationSelector() {
         className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
       >
         <span>📍 {selectedLocation?.length > 30 ? `${selectedLocation.substring(0, 30)}...` : selectedLocation}</span>
-        <span className="text-lg">›</span>
+        <span className="text-lg" aria-hidden="true">›</span>
       </button>
 
-      {/* Right-side sliding panel */}
-      <div
-        className={`fixed inset-0 z-[100] ${isOpen ? "" : "pointer-events-none"}`}
-        aria-hidden={!isOpen}
-      >
-        {/* Overlay */}
-        <button
-          type="button"
-          onClick={closePanel}
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
-            isOpen ? "opacity-100" : "opacity-0"
-          }`}
-          aria-label="Close location panel"
-        />
-
-        {/* Panel */}
-        <aside
-          className={`absolute right-0 top-0 h-full w-[350px] max-w-[92vw] bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-slate-800 ${
-            isOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Select Location"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-slate-800">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Select Location</h2>
-            <button
-              ref={closeBtnRef}
-              onClick={closePanel}
-              className="rounded-md px-2 py-1 text-2xl leading-none text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              aria-label="Close"
-              type="button"
+      {typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className={`fixed inset-0 z-[9999] ${isOpen ? "" : "pointer-events-none"}`}
+              aria-hidden={!isOpen}
             >
-              ✕
-            </button>
-          </div>
+              {/* Overlay (blur + dark bg). Clicking outside closes. */}
+              <div
+                className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
+                  isOpen ? "opacity-100" : "opacity-0"
+                }`}
+                onMouseDown={closePanel}
+                aria-hidden="true"
+              />
 
-          {/* Content */}
-          <div className="flex h-[calc(100%-57px)] flex-col">
-            <div className="space-y-5 px-5 py-4">
-              {/* Search Input (optional local filter for popular list) */}
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Search by area, city"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                />
-              </div>
-
-              {/* Current Location */}
-              <button
-                onClick={handleUseCurrentLocation}
-                disabled={isDetecting}
-                className="w-full rounded-xl border border-transparent p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-70 hover:border-blue-100 hover:bg-blue-50 dark:hover:bg-slate-700"
-                type="button"
-              >
-                <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
-                  <span className="text-xl">📍</span>
-                  <span className="font-medium">
-                    {isDetecting ? "Detecting location..." : "Use Current Location"}
-                  </span>
-                </div>
-                {detectError ? (
-                  <div className="mt-2 text-sm text-red-600 dark:text-red-400">{detectError}</div>
-                ) : null}
-              </button>
-
-              {/* Saved Addresses */}
-              <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
-                <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">Saved Addresses</h3>
-                {!user ? (
-                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm dark:border-slate-600 dark:bg-slate-900/30">
+              {/* Center wrapper */}
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <div
+                  ref={dialogRef}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="select-location-title"
+                  tabIndex={-1}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className={`w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10
+                    transition-all duration-200 ease-out
+                    ${isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-1"}`}
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+                    <div className="min-w-0">
+                      <h2 id="select-location-title" className="text-lg font-semibold text-slate-900 dark:text-white">
+                        Select Location
+                      </h2>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                        Search or choose from saved and popular locations.
+                      </p>
+                    </div>
                     <button
-                      onClick={() => (window.location.href = "/login")}
-                      className="w-full text-left text-blue-600 hover:underline dark:text-blue-400"
+                      onClick={closePanel}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      aria-label="Close"
                       type="button"
                     >
-                      Login to save addresses
+                      ✕
                     </button>
                   </div>
-                ) : (
-                  <div className="text-sm text-slate-500 dark:text-slate-400">No saved addresses</div>
-                )}
-              </div>
 
-              {/* Popular Locations */}
-              <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
-                <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">Popular Locations</h3>
-              </div>
-            </div>
+                  {/* Content */}
+                  <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+                    <div className="space-y-5">
+                      {/* Search */}
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true">
+                          🔍
+                        </span>
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          placeholder="Search by area, city"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                      </div>
 
-            <div className="flex-1 overflow-y-auto px-5 pb-5">
-              {popularLoading ? (
-                <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  Loading popular locations...
-                </div>
-              ) : popularError ? (
-                <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  {popularError}
-                </div>
-              ) : filteredPopular.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-600 dark:bg-slate-900/30 dark:text-slate-300">
-                  No popular locations available right now.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredPopular.map((location) => (
-                    <button
-                      key={location}
-                      onClick={() => handleLocationSelect(location)}
-                      className="w-full rounded-xl p-3 text-left text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-                      type="button"
-                    >
-                      {location}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Fallback local list (only shown if backend returns nothing) */}
-              {!popularLoading && filteredPopular.length === 0 ? (
-                <div className="mt-4">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Suggested
-                  </div>
-                  <div className="space-y-2">
-                    {commonLocations.map((location) => (
+                      {/* Use Current Location */}
                       <button
-                        key={location}
-                        onClick={() => handleLocationSelect(location)}
-                        className="w-full rounded-xl p-3 text-left text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                        onClick={handleUseCurrentLocation}
+                        disabled={isDetecting}
+                        className="w-full rounded-xl border border-transparent p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-70 hover:border-blue-100 hover:bg-blue-50 dark:hover:bg-slate-700"
                         type="button"
                       >
-                        {location}
+                        <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
+                          <span className="text-xl" aria-hidden="true">
+                            📍
+                          </span>
+                          <span className="font-medium">
+                            {isDetecting ? "Detecting location..." : "Use Current Location"}
+                          </span>
+                        </div>
+                        {detectError ? (
+                          <div className="mt-2 text-sm text-red-600 dark:text-red-400">{detectError}</div>
+                        ) : null}
                       </button>
-                    ))}
+
+                      {/* Saved Addresses */}
+                      <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
+                        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">Saved Addresses</h3>
+                        {!user ? (
+                          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm dark:border-slate-600 dark:bg-slate-900/30">
+                            <button
+                              onClick={() => (window.location.href = "/login")}
+                              className="w-full text-left text-blue-600 hover:underline dark:text-blue-400"
+                              type="button"
+                            >
+                              Login to save addresses
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-slate-500 dark:text-slate-400">No saved addresses</div>
+                        )}
+                      </div>
+
+                      {/* Popular Locations */}
+                      <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
+                        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Popular Locations</h3>
+
+                        {popularLoading ? (
+                          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            Loading popular locations...
+                          </div>
+                        ) : popularError ? (
+                          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {popularError}
+                          </div>
+                        ) : filteredPopular.length === 0 ? (
+                          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-600 dark:bg-slate-900/30 dark:text-slate-300">
+                            No popular locations available right now.
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {filteredPopular.map((location) => (
+                              <button
+                                key={location}
+                                onClick={() => handleLocationSelect(location)}
+                                className="w-full rounded-xl p-3 text-left text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700"
+                                type="button"
+                              >
+                                {location}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Fallback local list (only shown if backend returns nothing) */}
+                        {!popularLoading && filteredPopular.length === 0 ? (
+                          <div className="mt-4">
+                            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                              Suggested
+                            </div>
+                            <div className="space-y-2">
+                              {commonLocations.map((location) => (
+                                <button
+                                  key={location}
+                                  onClick={() => handleLocationSelect(location)}
+                                  className="w-full rounded-xl p-3 text-left text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700"
+                                  type="button"
+                                >
+                                  {location}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={closePanel}
+                      className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-200 dark:hover:bg-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closePanel}
+                      className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Done
+                    </button>
                   </div>
                 </div>
-              ) : null}
-            </div>
-          </div>
-        </aside>
-      </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }

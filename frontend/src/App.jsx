@@ -18,6 +18,7 @@ import { ProductsPage } from "./pages/ProductsPage";
 import { AdminProductsPage } from "./pages/AdminProductsPage";
 import { SellerProductsPage } from "./pages/SellerProductsPage";
 import { ProductFormPage } from "./pages/ProductFormPage";
+import { ProductDetailsPage } from "./pages/ProductDetailsPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { OrdersPage } from "./pages/OrdersPage";
 import { WishlistPage } from "./pages/WishlistPage";
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/role" element={<RoleSelectionPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+          <Route path="/product/:productId" element={<ProductDetailsPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardRedirect />} />
