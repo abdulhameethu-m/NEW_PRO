@@ -107,9 +107,9 @@ export function ShopPage() {
                 className="group bg-white dark:bg-slate-800 rounded-lg shadow-sm hover:shadow-md transition border border-slate-200 dark:border-slate-700 overflow-hidden"
               >
                 <div className="relative w-full h-48 bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                  {product.images?.[0]?.url ? (
+                  {product.images?.[0] ? (
                     <img
-                      src={product.images[0].url}
+                      src={product.images[0]}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />

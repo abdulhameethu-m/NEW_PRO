@@ -1,177 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "../context/authStore";
-import { api } from "../services/api";
 
 export function LocationSelector() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("Layout Road, Kadampadi, Tamil Nadu");
-  const [selectedCoords, setSelectedCoords] = useState(null); // { latitude, longitude }
-
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [detectError, setDetectError] = useState("");
-
-  const [popularLocations, setPopularLocations] = useState([]);
-  const [popularLoading, setPopularLoading] = useState(false);
-  const [popularError, setPopularError] = useState("");
-
   const user = useAuthStore((s) => s.user);
-  const dialogRef = useRef(null);
-  const inputRef = useRef(null);
-  const lastActiveRef = useRef(null);
 
-  const closePanel = () => {
-    setIsOpen(false);
-    setSearchQuery("");
-    setDetectError("");
-  };
-
-  const openPanel = () => setIsOpen(true);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    lastActiveRef.current = document.activeElement;
-    const t = window.setTimeout(() => inputRef.current?.focus?.(), 0);
-    return () => window.clearTimeout(t);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        closePanel();
-        return;
-      }
-
-      if (e.key !== "Tab") return;
-
-      const root = dialogRef.current;
-      if (!root) return;
-
-      const focusable = root.querySelectorAll(
-        [
-          'a[href]',
-          'button:not([disabled])',
-          'textarea:not([disabled])',
-          'input:not([disabled])',
-          'select:not([disabled])',
-          '[tabindex]:not([tabindex="-1"])',
-        ].join(",")
-      );
-
-      const list = Array.from(focusable).filter(
-        (el) => el && el.offsetParent !== null && !el.hasAttribute("disabled")
-      );
-
-      if (list.length === 0) {
-        e.preventDefault();
-        root.focus();
-        return;
-      }
-
-      const first = list[0];
-      const last = list[list.length - 1];
-      const active = document.activeElement;
-
-      if (e.shiftKey) {
-        if (active === first || active === root) {
-          e.preventDefault();
-          last.focus();
+  const handleUseCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setSelectedLocation(`Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`);
+          setShowModal(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("Unable to get your current location");
         }
-      } else {
-        if (active === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) return;
-    const el = lastActiveRef.current;
-    if (el && typeof el.focus === "function") {
-      el.focus();
-    }
-  }, [isOpen]);
-
-  const formatPlace = (parts) => {
-    const city = parts?.city || parts?.town || parts?.village || parts?.suburb || parts?.county || "";
-    const state = parts?.state || parts?.region || "";
-    const country = parts?.country || "";
-    return [city, state, country].filter(Boolean).join(", ");
-  };
-
-  const reverseGeocode = async ({ latitude, longitude }) => {
-    // OSM Nominatim reverse geocoding
-    // Note: Browser requests can be rate-limited; handle failures gracefully.
-    const url = new URL("https://nominatim.openstreetmap.org/reverse");
-    url.searchParams.set("format", "jsonv2");
-    url.searchParams.set("lat", String(latitude));
-    url.searchParams.set("lon", String(longitude));
-    url.searchParams.set("zoom", "10"); // city-level-ish
-    url.searchParams.set("addressdetails", "1");
-
-    const res = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-    });
-    if (!res.ok) throw new Error("reverse_geocode_failed");
-    const data = await res.json();
-    const formatted = formatPlace(data?.address);
-    if (!formatted) throw new Error("reverse_geocode_empty");
-    return formatted;
-  };
-
-  const handleUseCurrentLocation = async () => {
-    setDetectError("");
-
-    if (!("geolocation" in navigator)) {
-      setDetectError("Unable to fetch location");
-      return;
-    }
-
-    setIsDetecting(true);
-    try {
-      const coords = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) =>
-            resolve({
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-            }),
-          (err) => reject(err),
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
-        );
-      });
-
-      const formatted = await reverseGeocode(coords);
-
-      setSelectedCoords(coords);
-      setSelectedLocation(formatted);
-      closePanel();
-    } catch (err) {
-      const code = err?.code;
-      if (code === 1) setDetectError("Location access denied");
-      else setDetectError("Unable to fetch location");
-    } finally {
-      setIsDetecting(false);
+      );
     }
   };
 
@@ -185,241 +32,96 @@ export function LocationSelector() {
 
   const handleLocationSelect = (location) => {
     setSelectedLocation(location);
-    setSelectedCoords(null);
-    closePanel();
+    setShowModal(false);
   };
-
-  const filteredPopular = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return popularLocations;
-    return popularLocations.filter((loc) => String(loc).toLowerCase().includes(q));
-  }, [popularLocations, searchQuery]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    let cancelled = false;
-
-    const loadPopular = async () => {
-      setPopularError("");
-      setPopularLoading(true);
-      try {
-        // Expected backend shape: { locations: string[] } OR string[]
-        const res = await api.get("/locations/popular");
-        const payload = res?.data;
-        const locations = Array.isArray(payload) ? payload : payload?.locations;
-        const normalized = Array.isArray(locations)
-          ? locations.map((x) => String(x)).filter(Boolean)
-          : [];
-        if (!cancelled) setPopularLocations(normalized);
-      } catch (e) {
-        if (!cancelled) {
-          setPopularLocations([]);
-          setPopularError("Unable to load popular locations");
-        }
-      } finally {
-        if (!cancelled) setPopularLoading(false);
-      }
-    };
-
-    loadPopular();
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen]);
 
   return (
     <>
       {/* Location Display Button */}
       <button
-        onClick={openPanel}
+        onClick={() => setShowModal(true)}
         className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
       >
-        <span>📍 {selectedLocation?.length > 30 ? `${selectedLocation.substring(0, 30)}...` : selectedLocation}</span>
-        <span className="text-lg" aria-hidden="true">›</span>
+        <span>📍 {selectedLocation.substring(0, 30)}...</span>
+        <span className="text-lg">›</span>
       </button>
 
-      {typeof document !== "undefined"
-        ? createPortal(
-            <div
-              className={`fixed inset-0 z-[9999] ${isOpen ? "" : "pointer-events-none"}`}
-              aria-hidden={!isOpen}
-            >
-              {/* Overlay (blur + dark bg). Clicking outside closes. */}
-              <div
-                className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
-                  isOpen ? "opacity-100" : "opacity-0"
-                }`}
-                onMouseDown={closePanel}
-                aria-hidden="true"
-              />
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center">
+          <div className="bg-white dark:bg-slate-800 rounded-t-lg sm:rounded-lg w-full sm:w-96 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800">
+              <h2 className="font-semibold text-slate-900 dark:text-white">Select delivery address</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-2xl text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
 
-              {/* Center wrapper */}
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <div
-                  ref={dialogRef}
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="select-location-title"
-                  tabIndex={-1}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  className={`w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10
-                    transition-all duration-200 ease-out
-                    ${isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-1"}`}
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
-                    <div className="min-w-0">
-                      <h2 id="select-location-title" className="text-lg font-semibold text-slate-900 dark:text-white">
-                        Select Location
-                      </h2>
-                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                        Search or choose from saved and popular locations.
-                      </p>
-                    </div>
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Search Input */}
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search by area, street name, pin code"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+
+              {/* Current Location */}
+              <button
+                onClick={handleUseCurrentLocation}
+                className="w-full flex items-center gap-3 p-3 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg transition"
+              >
+                <span className="text-xl">📍</span>
+                <span className="font-medium">Use my current location</span>
+              </button>
+
+              {/* Divider */}
+              <div className="border-t border-dotted border-slate-300 dark:border-slate-600"></div>
+
+              {/* Saved Addresses */}
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Saved addresses</h3>
+                {!user ? (
+                  <button
+                    onClick={() => window.location.href = "/login"}
+                    className="w-full flex items-center gap-3 p-3 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg transition"
+                  >
+                    <span className="text-xl">👤</span>
+                    <span className="font-medium">Login to see saved addresses</span>
+                  </button>
+                ) : (
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">No saved addresses</p>
+                )}
+              </div>
+
+              {/* Common Locations */}
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Popular locations</h3>
+                <div className="space-y-2">
+                  {commonLocations.map((location) => (
                     <button
-                      onClick={closePanel}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      aria-label="Close"
-                      type="button"
+                      key={location}
+                      onClick={() => handleLocationSelect(location)}
+                      className="w-full text-left p-3 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition text-slate-700 dark:text-slate-300"
                     >
-                      ✕
+                      {location}
                     </button>
-                  </div>
-
-                  {/* Content */}
-                  <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
-                    <div className="space-y-5">
-                      {/* Search */}
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true">
-                          🔍
-                        </span>
-                        <input
-                          ref={inputRef}
-                          type="text"
-                          placeholder="Search by area, city"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        />
-                      </div>
-
-                      {/* Use Current Location */}
-                      <button
-                        onClick={handleUseCurrentLocation}
-                        disabled={isDetecting}
-                        className="w-full rounded-xl border border-transparent p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-70 hover:border-blue-100 hover:bg-blue-50 dark:hover:bg-slate-700"
-                        type="button"
-                      >
-                        <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
-                          <span className="text-xl" aria-hidden="true">
-                            📍
-                          </span>
-                          <span className="font-medium">
-                            {isDetecting ? "Detecting location..." : "Use Current Location"}
-                          </span>
-                        </div>
-                        {detectError ? (
-                          <div className="mt-2 text-sm text-red-600 dark:text-red-400">{detectError}</div>
-                        ) : null}
-                      </button>
-
-                      {/* Saved Addresses */}
-                      <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
-                        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">Saved Addresses</h3>
-                        {!user ? (
-                          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm dark:border-slate-600 dark:bg-slate-900/30">
-                            <button
-                              onClick={() => (window.location.href = "/login")}
-                              className="w-full text-left text-blue-600 hover:underline dark:text-blue-400"
-                              type="button"
-                            >
-                              Login to save addresses
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="text-sm text-slate-500 dark:text-slate-400">No saved addresses</div>
-                        )}
-                      </div>
-
-                      {/* Popular Locations */}
-                      <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
-                        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Popular Locations</h3>
-
-                        {popularLoading ? (
-                          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                            Loading popular locations...
-                          </div>
-                        ) : popularError ? (
-                          <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                            {popularError}
-                          </div>
-                        ) : filteredPopular.length === 0 ? (
-                          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-600 dark:bg-slate-900/30 dark:text-slate-300">
-                            No popular locations available right now.
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {filteredPopular.map((location) => (
-                              <button
-                                key={location}
-                                onClick={() => handleLocationSelect(location)}
-                                className="w-full rounded-xl p-3 text-left text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700"
-                                type="button"
-                              >
-                                {location}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Fallback local list (only shown if backend returns nothing) */}
-                        {!popularLoading && filteredPopular.length === 0 ? (
-                          <div className="mt-4">
-                            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                              Suggested
-                            </div>
-                            <div className="space-y-2">
-                              {commonLocations.map((location) => (
-                                <button
-                                  key={location}
-                                  onClick={() => handleLocationSelect(location)}
-                                  className="w-full rounded-xl p-3 text-left text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700"
-                                  type="button"
-                                >
-                                  {location}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-slate-700">
-                    <button
-                      type="button"
-                      onClick={closePanel}
-                      className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-200 dark:hover:bg-slate-700"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={closePanel}
-                      className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      Done
-                    </button>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </div>,
-            document.body
-          )
-        : null}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
