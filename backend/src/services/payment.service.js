@@ -1,96 +1,84 @@
-const Stripe = require("stripe");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
 const { AppError } = require("../utils/AppError");
 const orderRepo = require("../repositories/order.repository");
+const cartRepo = require("../repositories/cart.repository");
+const paymentRepo = require("../repositories/payment.repository");
+const checkoutService = require("../services/checkout.service");
 
-function getStripeClient() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new AppError("Stripe is not configured", 500, "STRIPE_NOT_CONFIGURED");
-  return new Stripe(key);
-}
-
-function toMinor(amount, currency) {
-  const c = String(currency || "INR").toUpperCase();
-  // Most common currencies are 2-decimal.
-  const factor = 100;
-  const minor = Math.round(Number(amount || 0) * factor);
-  if (!Number.isFinite(minor) || minor < 0) throw new AppError("Invalid amount", 400, "VALIDATION_ERROR");
-  return { amount: minor, currency: c.toLowerCase() };
+function getRazorpayClient() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) throw new AppError("Razorpay is not configured", 500, "RAZORPAY_NOT_CONFIGURED");
+  return new Razorpay({ key_id: keyId, key_secret: keySecret });
 }
 
 class PaymentService {
-  async createStripePaymentIntent({ userId, orderIds = [] }) {
-    if (!Array.isArray(orderIds) || orderIds.length === 0) {
-      throw new AppError("orderIds is required", 400, "VALIDATION_ERROR");
+  async createRazorpayOrder({ userId, cartId }) {
+    // Fetch cart
+    const cart = await cartRepo.findByUserId(userId);
+    if (!cart || cart.items.length === 0) {
+      throw new AppError("Cart is empty", 400, "VALIDATION_ERROR");
     }
 
-    const orders = [];
-    for (const id of orderIds) {
-      const order = await orderRepo.findByIdForUser(id, userId);
-      if (!order) throw new AppError("Order not found", 404, "NOT_FOUND");
-      if (order.paymentStatus !== "Pending") {
-        throw new AppError("Order is not payable", 400, "INVALID_OPERATION");
-      }
-      orders.push(order);
+    // Recalculate total securely
+    let total = 0;
+    for (const item of cart.items) {
+      total += item.price * item.quantity;
     }
 
-    const currency = orders[0].currency || "INR";
-    if (orders.some((o) => String(o.currency || "INR") !== String(currency))) {
-      throw new AppError("All orders must have the same currency", 400, "VALIDATION_ERROR");
-    }
+    const amount = Math.round(total * 100); // Paise
+    const currency = "INR";
+    const receipt = `receipt_${userId}_${Date.now()}`;
 
-    const total = orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
-    const { amount, currency: stripeCurrency } = toMinor(total, currency);
-
-    const stripe = getStripeClient();
-    const intent = await stripe.paymentIntents.create({
+    const razorpay = getRazorpayClient();
+    const order = await razorpay.orders.create({
       amount,
-      currency: stripeCurrency,
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        userId: String(userId),
-        orderIds: orders.map((o) => String(o._id)).join(","),
-      },
+      currency,
+      receipt,
     });
 
-    return { clientSecret: intent.client_secret, paymentIntentId: intent.id, amount, currency: stripeCurrency };
+    // Save payment record
+    const paymentRecord = await paymentRepo.create({
+      userId,
+      amount: total,
+      currency,
+      status: "PENDING",
+      razorpayOrderId: order.id,
+      cartId,
+    });
+
+    return {
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key: process.env.RAZORPAY_KEY_ID,
+    };
   }
 
-  async markStripeOrdersPaid({ userId, paymentIntentId, orderIds = [] }) {
-    if (!paymentIntentId) throw new AppError("paymentIntentId is required", 400, "VALIDATION_ERROR");
-    if (!Array.isArray(orderIds) || orderIds.length === 0) {
-      throw new AppError("orderIds is required", 400, "VALIDATION_ERROR");
+  async verifyRazorpayPayment({ userId, razorpay_order_id, razorpay_payment_id, razorpay_signature, shippingAddress }) {
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      throw new AppError("Payment verification failed", 400, "PAYMENT_VERIFICATION_FAILED");
     }
 
-    const stripe = getStripeClient();
-    const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    if (!intent) throw new AppError("Payment not found", 404, "NOT_FOUND");
+    // Update payment status
+    await paymentRepo.updateStatus(razorpay_order_id, "PAID", razorpay_payment_id);
 
-    const intentOrderIds = String(intent.metadata?.orderIds || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    // Create orders
+    const result = await checkoutService.createOrder(userId, { shippingAddress, paymentMethod: "ONLINE" });
 
-    const requested = orderIds.map(String);
-    const allMatch = requested.every((id) => intentOrderIds.includes(id));
-    if (!allMatch) throw new AppError("Payment does not match orders", 400, "VALIDATION_ERROR");
-    if (String(intent.metadata?.userId || "") !== String(userId)) {
-      throw new AppError("Payment does not belong to user", 403, "FORBIDDEN");
+    // Update order payment status to Paid
+    for (const order of result.orders) {
+      await orderRepo.updatePaymentStatus(order._id, "Paid");
     }
 
-    const status = intent.status;
-    const nextPaymentStatus = status === "succeeded" ? "Paid" : status === "canceled" ? "Failed" : "Pending";
-
-    const updated = [];
-    for (const id of requested) {
-      const order = await orderRepo.findByIdForUser(id, userId);
-      if (!order) throw new AppError("Order not found", 404, "NOT_FOUND");
-      if (order.paymentStatus !== nextPaymentStatus) {
-        await orderRepo.updatePaymentStatus(id, nextPaymentStatus);
-      }
-      updated.push(id);
-    }
-
-    return { paymentIntentId, stripeStatus: status, paymentStatus: nextPaymentStatus, orderIds: updated };
+    return { paymentId: razorpay_payment_id, orderId: razorpay_order_id, status: "PAID", orders: result.orders };
   }
 }
 

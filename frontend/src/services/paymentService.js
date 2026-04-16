@@ -1,12 +1,12 @@
 import { api } from "./api";
 
-export async function createStripeIntent(orderIds = []) {
-  const { data } = await api.post("/api/payments/stripe/create-intent", { orderIds });
+export async function createRazorpayOrder(payload) {
+  const { data } = await api.post("/api/payments/create-order", payload);
   return data;
 }
 
-export async function verifyStripePayment({ paymentIntentId, orderIds }) {
-  const { data } = await api.post("/api/payments/stripe/verify", { paymentIntentId, orderIds });
+export async function verifyRazorpayPayment(payload) {
+  const { data } = await api.post("/api/payments/verify", payload);
   return data;
 }
 

@@ -20,6 +20,9 @@ const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
 const checkoutRoutes = require("./routes/checkout.routes");
 const paymentRoutes = require("./routes/payment.routes");
+const payoutRoutes = require("./routes/payout.routes");
+const deliveryRoutes = require("./routes/delivery.routes");
+const webhookRoutes = require("./routes/webhook.routes");
 
 function createApp() {
   const app = express();
@@ -73,6 +76,9 @@ function createApp() {
   app.use("/api/orders", orderRoutes);
   app.use("/api/checkout", checkoutRoutes);
   app.use("/api/payments", paymentRoutes);
+  app.use("/api/payouts", payoutRoutes);
+  app.use("/api/delivery", deliveryRoutes);
+  app.use("/api/webhooks", webhookRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

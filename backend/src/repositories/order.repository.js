@@ -6,6 +6,10 @@ class OrderRepository {
     return await Order.insertMany(orderPayloads, { ordered: true });
   }
 
+  async findByTrackingId(trackingId) {
+    return await Order.findOne({ trackingId });
+  }
+
   async list({
     page = 1,
     limit = 20,

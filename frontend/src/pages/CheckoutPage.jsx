@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BackButton } from "../components/BackButton";
 import * as checkoutService from "../services/checkoutService";
-import * as orderService from "../services/orderService";
+import * as paymentService from "../services/paymentService";
 import { formatCurrency } from "../utils/formatCurrency";
 
 function normalizeError(err) {
@@ -54,10 +54,33 @@ export function CheckoutPage() {
     setPlacing(true);
     setError("");
     try {
-      const created = await orderService.createOrders({ address, paymentMethod });
-      const orders = Array.isArray(created?.data) ? created.data : [];
-      // For now we route to orders history. Stripe flow can be layered in with Stripe.js + webhook later.
-      navigate("/orders", { replace: true, state: { justPlaced: true, orderIds: orders.map((o) => o._id) } });
+      if (paymentMethod === "cod") {
+        const created = await checkoutService.createOrder({ shippingAddress: address, paymentMethod: "COD" });
+        navigate("/orders", { replace: true, state: { justPlaced: true } });
+      } else if (paymentMethod === "online") {
+        // Create Razorpay order
+        const orderRes = await paymentService.createRazorpayOrder({ cartId: "current" }); // Assume cart ID
+        const options = {
+          key: orderRes.data.key,
+          amount: orderRes.data.amount,
+          currency: orderRes.data.currency,
+          order_id: orderRes.data.orderId,
+          name: "Your Store",
+          description: "Purchase",
+          handler: async function (response) {
+            // Verify payment
+            await paymentService.verifyRazorpayPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              shippingAddress: address,
+            });
+            navigate("/orders", { replace: true, state: { justPlaced: true } });
+          },
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }
     } catch (e) {
       setError(normalizeError(e));
     } finally {
@@ -122,6 +145,34 @@ export function CheckoutPage() {
                     />
                   </label>
                 ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">Payment method</div>
+              <div className="mt-3 grid gap-3">
+                <label className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="cod"
+                    checked={paymentMethod === "cod"}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="h-4 w-4 text-blue-600"
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-200">Cash on Delivery</span>
+                </label>
+                <label className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="online"
+                    checked={paymentMethod === "online"}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="h-4 w-4 text-blue-600"
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-200">Online Payment (Razorpay)</span>
+                </label>
               </div>
             </div>
 

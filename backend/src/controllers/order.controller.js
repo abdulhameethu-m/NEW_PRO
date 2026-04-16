@@ -21,6 +21,19 @@ const getById = asyncHandler(async (req, res) => {
   return ok(res, order, "Order loaded");
 });
 
+const track = asyncHandler(async (req, res) => {
+  const order = await orderService.getForUser(req.user.sub, req.params.id);
+  const tracking = {
+    orderId: order._id,
+    status: order.status,
+    deliveryStatus: order.deliveryStatus,
+    trackingId: order.trackingId,
+    trackingUrl: order.trackingUrl,
+    timeline: order.timeline,
+  };
+  return ok(res, tracking, "Tracking info loaded");
+});
+
 const cancel = asyncHandler(async (req, res) => {
   const order = await orderService.cancelForUser(req.user.sub, req.params.id);
   return ok(res, order, "Order cancelled");
@@ -64,6 +77,7 @@ module.exports = {
   create,
   listUser,
   getById,
+  track,
   cancel,
   requestReturn,
   listSeller,

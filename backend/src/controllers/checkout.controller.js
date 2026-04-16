@@ -7,5 +7,11 @@ const prepare = asyncHandler(async (req, res) => {
   return ok(res, result, "Checkout prepared");
 });
 
-module.exports = { prepare };
+const createOrder = asyncHandler(async (req, res) => {
+  const { shippingAddress, paymentMethod } = req.body;
+  const result = await checkoutService.createOrder(req.user.sub, { shippingAddress, paymentMethod });
+  return ok(res, result, "Order created");
+});
+
+module.exports = { prepare, createOrder };
 

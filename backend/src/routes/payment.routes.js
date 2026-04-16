@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.use(authRequired);
 
-router.post("/stripe/create-intent", paymentController.createStripeIntent);
-router.post("/stripe/verify", paymentController.markStripePaid);
+router.post("/create-order", paymentController.createRazorpayOrder);
+router.post("/verify", paymentController.verifyRazorpayPayment);
 
 module.exports = router;
 

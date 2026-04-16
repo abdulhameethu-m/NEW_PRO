@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 // NOTE: Keep existing statuses for backward-compatibility with admin UI.
 // "Placed" is an alias for "Pending" (older data) and "Returned" supports post-delivery returns.
-const ORDER_STATUS = ["Pending", "Placed", "Shipped", "Delivered", "Returned", "Cancelled"];
+const ORDER_STATUS = ["Pending", "Placed", "Packed", "Shipped", "Out for Delivery", "Delivered", "Returned", "Cancelled"];
 const PAYMENT_STATUS = ["Pending", "Paid", "Failed", "Refunded"];
 
 const orderItemSchema = new mongoose.Schema(
@@ -64,6 +64,19 @@ const orderSchema = new mongoose.Schema(
       enum: PAYMENT_STATUS,
       default: "Pending",
       index: true,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["ONLINE", "COD"],
+      default: "ONLINE",
+    },
+    deliveryPartner: { type: String, default: "Shiprocket" },
+    trackingId: { type: String },
+    trackingUrl: { type: String },
+    deliveryStatus: {
+      type: String,
+      enum: ["PENDING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "RETURNED"],
+      default: "PENDING",
     },
     shippingAddress: {
       fullName: { type: String, trim: true },
