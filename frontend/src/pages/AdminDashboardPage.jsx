@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getDashboard, getAnalytics } from "../services/adminApi";
 import { StatusBadge } from "../components/StatusBadge";
+import { formatCurrency } from "../utils/formatCurrency";
 
 function normalizeError(err) {
   return err?.response?.data?.message || err?.message || "Request failed";
@@ -58,7 +59,7 @@ export function AdminDashboardPage() {
         <MetricCard label="Total Orders" value={loading ? "..." : totals.orders ?? 0} tone="amber" />
         <MetricCard
           label="Revenue"
-          value={loading ? "..." : `$${Number(totals.revenue || 0).toLocaleString()}`}
+          value={loading ? "..." : formatCurrency(totals.revenue || 0)}
           tone="emerald"
         />
       </section>
@@ -96,7 +97,7 @@ export function AdminDashboardPage() {
                     />
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    ${Number(entry.revenue || 0).toLocaleString()}
+                    {formatCurrency(entry.revenue || 0)}
                   </div>
                 </div>
               ))
@@ -138,7 +139,7 @@ export function AdminDashboardPage() {
                       <StatusBadge value={product.status} />
                     </div>
                     <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                      Revenue: ${Number(product.analytics?.totalRevenue || 0).toLocaleString()} • Sales: {product.analytics?.salesCount || 0}
+                      Revenue: {formatCurrency(product.analytics?.totalRevenue || 0)} • Sales: {product.analytics?.salesCount || 0}
                     </div>
                   </div>
                 ))

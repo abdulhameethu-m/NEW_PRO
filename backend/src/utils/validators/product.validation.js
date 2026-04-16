@@ -36,7 +36,7 @@ const productSchema = Joi.object({
 
   currency: Joi.string()
     .valid("USD", "EUR", "INR", "GBP")
-    .default("USD"),
+    .default("INR"),
 
   stock: Joi.number().required().integer().min(0).messages({
     "number.base": "Stock must be a number",

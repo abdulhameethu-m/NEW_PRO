@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import * as productService from "../services/productService";
+import { formatCurrency } from "../utils/formatCurrency";
 
 export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,7 +118,7 @@ export function SearchBar() {
                         {product.name}
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        ${product.price}
+                        {formatCurrency(product.price)}
                       </p>
                     </div>
                   </Link>

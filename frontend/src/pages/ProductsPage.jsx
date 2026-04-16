@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BackButton } from "../components/BackButton";
 import * as productService from "../services/productService";
+import { formatCurrency } from "../utils/formatCurrency";
 
 export function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -383,11 +384,17 @@ function ProductCard({ product }) {
         <div className="mt-3">
           {product.discountPrice ? (
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">${product.discountPrice}</span>
-              <span className="text-xs text-slate-500 line-through dark:text-slate-400 sm:text-sm">${product.price}</span>
+              <span className="text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">
+                {formatCurrency(product.discountPrice)}
+              </span>
+              <span className="text-xs text-slate-500 line-through dark:text-slate-400 sm:text-sm">
+                {formatCurrency(product.price)}
+              </span>
             </div>
           ) : (
-            <span className="text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">${product.price}</span>
+            <span className="text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">
+              {formatCurrency(product.price)}
+            </span>
           )}
         </div>
 

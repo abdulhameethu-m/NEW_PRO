@@ -30,6 +30,8 @@ import { OrdersPage } from "./pages/OrdersPage";
 import { WishlistPage } from "./pages/WishlistPage";
 import { AddressesPage } from "./pages/AddressesPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { CartPage } from "./pages/CartPage";
+import { CheckoutPage } from "./pages/CheckoutPage";
 
 export default function App() {
   return (
@@ -54,6 +56,8 @@ export default function App() {
           <Route element={<RoleGate roles={["user"]} />}>
             <Route path="/dashboard/user" element={<UserDashboardPage />} />
             <Route path="/shop" element={<ProductsPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
           </Route>
 
           <Route element={<RoleGate roles={["vendor"]} />}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { listOrders, updateOrderStatus } from "../services/adminApi";
 import { StatusBadge } from "../components/StatusBadge";
+import { formatCurrency } from "../utils/formatCurrency";
 
 function normalizeError(err) {
   return err?.response?.data?.message || err?.message || "Request failed";
@@ -86,7 +87,7 @@ export function AdminOrdersPage() {
                   <div>{order.userId?.name || "Unknown customer"}</div>
                   <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{order.userId?.email || "No email"}</div>
                 </div>
-                <div className="text-sm font-semibold text-slate-950 dark:text-white">${Number(order.totalAmount || 0).toLocaleString()}</div>
+                <div className="text-sm font-semibold text-slate-950 dark:text-white">{formatCurrency(order.totalAmount || 0)}</div>
                 <div><StatusBadge value={order.status} /></div>
                 <div className="flex flex-wrap gap-2">
                   {["Pending", "Shipped", "Delivered"].map((nextStatus) => (

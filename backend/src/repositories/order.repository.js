@@ -1,6 +1,11 @@
 const { Order } = require("../models/Order");
 
 class OrderRepository {
+  async createMany(orderPayloads = []) {
+    if (!Array.isArray(orderPayloads) || orderPayloads.length === 0) return [];
+    return await Order.insertMany(orderPayloads, { ordered: true });
+  }
+
   async list({
     page = 1,
     limit = 20,
@@ -64,6 +69,102 @@ class OrderRepository {
       .populate("sellerId", "companyName")
       .populate("items.productId", "name slug")
       .exec();
+  }
+
+  async findByIdForUser(id, userId) {
+    return await Order.findOne({ _id: id, userId })
+      .populate("sellerId", "companyName")
+      .populate("items.productId", "name slug images")
+      .exec();
+  }
+
+  async listByUserId({
+    userId,
+    page = 1,
+    limit = 20,
+    status,
+    sortBy = "createdAt",
+    sortOrder = -1,
+  } = {}) {
+    const query = { userId };
+    if (status) query.status = status;
+
+    const skip = (page - 1) * limit;
+    const sort = { [sortBy]: sortOrder };
+
+    const [orders, total] = await Promise.all([
+      Order.find(query)
+        .populate("sellerId", "companyName")
+        .populate("items.productId", "name slug images")
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      Order.countDocuments(query),
+    ]);
+
+    return {
+      orders,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async listBySellerId({
+    sellerId,
+    page = 1,
+    limit = 20,
+    status,
+    sortBy = "createdAt",
+    sortOrder = -1,
+  } = {}) {
+    const query = { sellerId };
+    if (status) query.status = status;
+
+    const skip = (page - 1) * limit;
+    const sort = { [sortBy]: sortOrder };
+
+    const [orders, total] = await Promise.all([
+      Order.find(query)
+        .populate("userId", "name email phone")
+        .populate("items.productId", "name slug images")
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      Order.countDocuments(query),
+    ]);
+
+    return {
+      orders,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async updatePaymentStatus(id, paymentStatus) {
+    return await Order.findByIdAndUpdate(
+      id,
+      {
+        $set: { paymentStatus },
+        $push: {
+          timeline: {
+            status: paymentStatus === "Paid" ? "Placed" : "Pending",
+            note: `Payment ${paymentStatus}`,
+            changedAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    ).exec();
   }
 
   async updateStatus(id, status) {

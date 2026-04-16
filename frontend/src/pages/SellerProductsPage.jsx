@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BackButton } from "../components/BackButton";
 import { useNavigate } from "react-router-dom";
 import * as productService from "../services/productService";
+import { formatCurrency } from "../utils/formatCurrency";
 
 function normalizeError(err) {
   return err?.response?.data?.message || err?.message || "Request failed";
@@ -203,9 +204,9 @@ export function SellerProductsPage() {
                 <div className="w-full sm:w-auto sm:text-right flex justify-between sm:flex-col gap-2">
                   <div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 sm:hidden">Price</div>
-                    <div className="text-sm font-medium text-slate-900 dark:text-white">${product.price}</div>
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">{formatCurrency(product.price)}</div>
                     {product.discountPrice && (
-                      <div className="text-xs text-green-600 dark:text-green-400">${product.discountPrice}</div>
+                      <div className="text-xs text-green-600 dark:text-green-400">{formatCurrency(product.discountPrice)}</div>
                     )}
                   </div>
                   <div>

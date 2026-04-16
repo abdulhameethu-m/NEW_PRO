@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import * as productService from "../services/productService";
+import { formatCurrency } from "../utils/formatCurrency";
 
 export function ShopPage() {
   const [searchParams] = useSearchParams();
@@ -131,15 +132,15 @@ export function ShopPage() {
                       {product.discountedPrice ? (
                         <>
                           <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                            ${product.discountedPrice}
+                            {formatCurrency(product.discountedPrice)}
                           </p>
                           <p className="text-xs text-slate-500 line-through">
-                            ${product.price}
+                            {formatCurrency(product.price)}
                           </p>
                         </>
                       ) : (
                         <p className="text-lg font-bold text-slate-900 dark:text-white">
-                          ${product.price}
+                          {formatCurrency(product.price)}
                         </p>
                       )}
                     </div>

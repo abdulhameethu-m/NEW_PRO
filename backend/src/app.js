@@ -16,6 +16,10 @@ const authRoutes = require("./routes/auth.routes");
 const vendorRoutes = require("./routes/vendor.routes");
 const adminRoutes = require("./routes/admin.routes");
 const productRoutes = require("./routes/product.routes");
+const cartRoutes = require("./routes/cart.routes");
+const orderRoutes = require("./routes/order.routes");
+const checkoutRoutes = require("./routes/checkout.routes");
+const paymentRoutes = require("./routes/payment.routes");
 
 function createApp() {
   const app = express();
@@ -65,6 +69,10 @@ function createApp() {
   app.use("/api/vendor", vendorRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/products", productRoutes);
+  app.use("/api/cart", cartRoutes);
+  app.use("/api/orders", orderRoutes);
+  app.use("/api/checkout", checkoutRoutes);
+  app.use("/api/payments", paymentRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

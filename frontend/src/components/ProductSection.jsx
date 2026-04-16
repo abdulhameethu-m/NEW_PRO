@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import * as productService from "../services/productService";
+import { formatCurrency } from "../utils/formatCurrency";
 
 export function ProductSection({ title, icon, sortBy = "createdAt", limit = 8 }) {
   const [products, setProducts] = useState([]);
@@ -164,11 +165,11 @@ function ProductCard({ product }) {
         {/* Price */}
         <div className="flex items-center gap-2">
           <span className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
-            ${product.discountPrice || product.price}
+            {formatCurrency(product.discountPrice || product.price)}
           </span>
           {product.discountPrice && (
             <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-through">
-              ${product.price}
+              {formatCurrency(product.price)}
             </span>
           )}
         </div>

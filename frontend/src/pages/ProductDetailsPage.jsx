@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { BackButton } from "../components/BackButton";
 import * as productService from "../services/productService";
+import * as cartService from "../services/cartService";
+import { useAuthStore } from "../context/authStore";
+import { formatCurrency } from "../utils/formatCurrency";
 
 export function ProductDetailsPage() {
   const { productId } = useParams();
+  const navigate = useNavigate();
+  const token = useAuthStore((s) => s.token);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [product, setProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,10 +190,12 @@ export function ProductDetailsPage() {
             </div>
 
             <div className="mt-3 flex items-end gap-3">
-              <div className="text-2xl font-extrabold text-slate-900 dark:text-white">${primaryPrice}</div>
+              <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                {formatCurrency(primaryPrice)}
+              </div>
               {hasDiscount ? (
                 <div className="pb-0.5 text-sm text-slate-500 line-through dark:text-slate-400">
-                  ${product.price}
+                  {formatCurrency(product.price)}
                 </div>
               ) : null}
             </div>
@@ -195,10 +203,23 @@ export function ProductDetailsPage() {
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || adding}
+                onClick={async () => {
+                  if (!token) return navigate("/login");
+                  setAdding(true);
+                  setError("");
+                  try {
+                    await cartService.addToCart(product._id, 1);
+                    navigate("/cart");
+                  } catch (e) {
+                    setError(e?.response?.data?.message || "Failed to add to cart");
+                  } finally {
+                    setAdding(false);
+                  }
+                }}
                 className="inline-flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Add to cart
+                {adding ? "Adding..." : "Add to cart"}
               </button>
               <button
                 type="button"

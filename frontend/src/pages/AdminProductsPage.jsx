@@ -7,6 +7,7 @@ import {
   rejectProduct,
 } from "../services/adminApi";
 import { StatusBadge } from "../components/StatusBadge";
+import { formatCurrency } from "../utils/formatCurrency";
 
 function normalizeError(err) {
   return err?.response?.data?.message || err?.message || "Request failed";
@@ -151,7 +152,7 @@ export function AdminProductsPage() {
                   <div className="text-sm text-slate-600 dark:text-slate-300">
                     {product.sellerId?.companyName || product.createdBy?.name || "Admin"}
                   </div>
-                  <div className="text-sm font-semibold text-slate-950 dark:text-white">${product.price}</div>
+                  <div className="text-sm font-semibold text-slate-950 dark:text-white">{formatCurrency(product.price)}</div>
                   <div>
                     <StatusBadge value={product.status} />
                   </div>

@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 
-const ORDER_STATUS = ["Pending", "Shipped", "Delivered", "Cancelled"];
+// NOTE: Keep existing statuses for backward-compatibility with admin UI.
+// "Placed" is an alias for "Pending" (older data) and "Returned" supports post-delivery returns.
+const ORDER_STATUS = ["Pending", "Placed", "Shipped", "Delivered", "Returned", "Cancelled"];
 const PAYMENT_STATUS = ["Pending", "Paid", "Failed", "Refunded"];
 
 const orderItemSchema = new mongoose.Schema(
@@ -48,7 +50,7 @@ const orderSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true, min: 0, default: 0 },
     currency: {
       type: String,
-      default: "USD",
+      default: "INR",
       enum: ["USD", "EUR", "INR", "GBP"],
     },
     status: {

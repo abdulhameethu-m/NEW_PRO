@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CategoryCarousel } from "../components/CategoryCarousel";
 import * as productService from "../services/productService";
+import { formatCurrency } from "../utils/formatCurrency";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -188,14 +189,14 @@ function ProductCard({ product }) {
             {product.discountPrice ? (
               <div className="flex items-baseline gap-2">
                 <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  ${product.discountPrice}
+                  {formatCurrency(product.discountPrice)}
                 </div>
                 <div className="truncate text-xs text-slate-500 line-through dark:text-slate-400">
-                  ${product.price}
+                  {formatCurrency(product.price)}
                 </div>
               </div>
             ) : (
-              <div className="text-sm font-bold text-slate-900 dark:text-slate-100">${product.price}</div>
+              <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatCurrency(product.price)}</div>
             )}
           </div>
 

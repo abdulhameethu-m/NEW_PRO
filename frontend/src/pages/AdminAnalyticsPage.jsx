@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAnalytics } from "../services/adminApi";
 import { StatusBadge } from "../components/StatusBadge";
+import { formatCurrency } from "../utils/formatCurrency";
 
 function normalizeError(err) {
   return err?.response?.data?.message || err?.message || "Request failed";
@@ -45,7 +46,7 @@ export function AdminAnalyticsPage() {
       ) : null}
 
       <div className="grid min-w-0 max-w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile label="Revenue" value={`$${Number(stats.revenue || 0).toLocaleString()}`} />
+        <StatTile label="Revenue" value={formatCurrency(stats.revenue || 0)} />
         <StatTile label="Delivered Orders" value={stats.deliveredOrders || 0} />
         <StatTile label="Approved Products" value={stats.approvedProducts || 0} />
         <StatTile label="Approved Sellers" value={stats.sellers || 0} />
@@ -66,7 +67,7 @@ export function AdminAnalyticsPage() {
                       <div className="text-xs text-slate-500 dark:text-slate-400">{entry.orders} orders</div>
                     </div>
                     <div className="text-sm font-semibold text-slate-950 dark:text-white">
-                      ${Number(entry.revenue || 0).toLocaleString()}
+                      {formatCurrency(entry.revenue || 0)}
                     </div>
                   </div>
                 </div>
@@ -97,7 +98,7 @@ export function AdminAnalyticsPage() {
                     <StatusBadge value={product.status} />
                   </div>
                   <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                    Revenue ${Number(product.analytics?.totalRevenue || 0).toLocaleString()} • Sales {product.analytics?.salesCount || 0}
+                    Revenue {formatCurrency(product.analytics?.totalRevenue || 0)} • Sales {product.analytics?.salesCount || 0}
                   </div>
                 </div>
               ))
