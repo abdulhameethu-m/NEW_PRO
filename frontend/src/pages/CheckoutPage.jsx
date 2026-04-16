@@ -61,10 +61,10 @@ export function CheckoutPage() {
         // Create Razorpay order
         const orderRes = await paymentService.createRazorpayOrder({ cartId: "current" }); // Assume cart ID
         const options = {
-          key: orderRes.data.key,
-          amount: orderRes.data.amount,
-          currency: orderRes.data.currency,
-          order_id: orderRes.data.orderId,
+          key: orderRes.key,
+          amount: orderRes.amount,
+          currency: orderRes.currency,
+          order_id: orderRes.orderId,
           name: "Your Store",
           description: "Purchase",
           handler: async function (response) {

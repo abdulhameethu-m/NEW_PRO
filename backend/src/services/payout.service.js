@@ -39,7 +39,7 @@ class PayoutService {
     });
 
     // Update vendor
-    await vendorRepo.update(sellerId, { razorpayAccountId: fundAccount.id });
+    await vendorRepo.updateById(sellerId, { razorpayAccountId: fundAccount.id });
 
     return fundAccount.id;
   }

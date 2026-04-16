@@ -102,7 +102,7 @@ class CheckoutService {
     }
 
     const bySeller = groupBySeller(validated);
-    const orders = [];
+    const orderPayloads = [];
     const payouts = [];
 
     for (const [sellerId, items] of bySeller) {
@@ -126,28 +126,34 @@ class CheckoutService {
         totalAmount,
         currency: "INR",
         status: "Placed",
-        paymentStatus: paymentMethod === "COD" ? "Pending" : "Pending", // For online, will be updated after payment
+        paymentStatus: "Pending", // For both COD and online until verified
         paymentMethod,
         shippingAddress,
         timeline: [{ status: "Placed", note: "Order placed" }],
       };
 
-      const order = await orderRepo.create(orderData);
-      orders.push(order);
+      orderPayloads.push(orderData);
+    }
 
-      // Create payout record
-      payouts.push({
-        sellerId,
+    // Create all orders at once
+    const orders = await orderRepo.createMany(orderPayloads);
+
+    // Create payout records
+    for (let i = 0; i < orders.length; i++) {
+      const order = orders[i];
+      const orderPayload = orderPayloads[i];
+      const subtotal = orderPayload.subtotal;
+      const totalAmount = orderPayload.totalAmount;
+      const commission = totalAmount * 0.1;
+      const sellerAmount = totalAmount - commission;
+
+      await payoutRepo.create({
+        sellerId: order.sellerId,
         orderId: order._id,
         amount: sellerAmount,
         commission,
         status: "PENDING",
       });
-    }
-
-    // Save payouts
-    for (const payout of payouts) {
-      await payoutRepo.create(payout);
     }
 
     // Clear cart
