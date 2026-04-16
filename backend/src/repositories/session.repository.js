@@ -1,0 +1,32 @@
+const { Session } = require("../models/Session");
+
+async function create(data) {
+  return await Session.create(data);
+}
+
+async function findById(id) {
+  return await Session.findById(id).exec();
+}
+
+async function updateById(id, update) {
+  return await Session.findByIdAndUpdate(id, { $set: update }, { new: true }).exec();
+}
+
+async function revokeById(id) {
+  return await Session.findByIdAndUpdate(id, { $set: { revokedAt: new Date() } }, { new: true }).exec();
+}
+
+async function revokeAllForUser(userId) {
+  return await Session.updateMany(
+    { userId, revokedAt: null },
+    { $set: { revokedAt: new Date() } }
+  ).exec();
+}
+
+module.exports = {
+  create,
+  findById,
+  updateById,
+  revokeById,
+  revokeAllForUser,
+};

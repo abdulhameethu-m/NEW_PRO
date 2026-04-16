@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/AdminLayout";
+import { VendorLayout } from "./components/VendorLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleGate } from "./components/RoleGate";
 
@@ -32,6 +33,19 @@ import { AddressesPage } from "./pages/AddressesPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { CartPage } from "./pages/CartPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
+import { VendorOverviewPage } from "./pages/VendorOverviewPage";
+import { VendorProductsPage } from "./pages/VendorProductsPage";
+import { VendorOrdersPage } from "./pages/VendorOrdersPage";
+import { VendorInventoryPage } from "./pages/VendorInventoryPage";
+import { VendorAnalyticsPage } from "./pages/VendorAnalyticsPage";
+import { VendorPayoutsPage } from "./pages/VendorPayoutsPage";
+import { VendorDeliveryPage } from "./pages/VendorDeliveryPage";
+import { VendorNotificationsPage } from "./pages/VendorNotificationsPage";
+import { VendorReviewsPage } from "./pages/VendorReviewsPage";
+import { VendorReturnsPage } from "./pages/VendorReturnsPage";
+import { VendorOffersPage } from "./pages/VendorOffersPage";
+import { VendorSupportPage } from "./pages/VendorSupportPage";
+import { VendorSettingsPage } from "./pages/VendorSettingsPage";
 
 export default function App() {
   return (
@@ -67,9 +81,25 @@ export default function App() {
             <Route path="/seller/products" element={<SellerProductsPage />} />
             <Route path="/seller/products/create" element={<ProductFormPage />} />
             <Route path="/seller/products/:productId/edit" element={<ProductFormPage />} />
+            <Route path="/vendor" element={<VendorLayout />}>
+              <Route index element={<Navigate to="/vendor/dashboard" replace />} />
+              <Route path="dashboard" element={<VendorOverviewPage />} />
+              <Route path="products" element={<VendorProductsPage />} />
+              <Route path="orders" element={<VendorOrdersPage />} />
+              <Route path="inventory" element={<VendorInventoryPage />} />
+              <Route path="analytics" element={<VendorAnalyticsPage />} />
+              <Route path="payouts" element={<VendorPayoutsPage />} />
+              <Route path="delivery" element={<VendorDeliveryPage />} />
+              <Route path="notifications" element={<VendorNotificationsPage />} />
+              <Route path="reviews" element={<VendorReviewsPage />} />
+              <Route path="returns" element={<VendorReturnsPage />} />
+              <Route path="offers" element={<VendorOffersPage />} />
+              <Route path="support" element={<VendorSupportPage />} />
+              <Route path="settings" element={<VendorSettingsPage />} />
+            </Route>
           </Route>
 
-          <Route element={<RoleGate roles={["admin"]} />}>
+          <Route element={<RoleGate roles={["admin", "super_admin", "support_admin", "finance_admin"]} />}>
             <Route path="/dashboard/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/dashboard/admin/vendor/:id" element={<AdminVendorDetailsPage />} />
             <Route path="/admin" element={<AdminLayout />}>

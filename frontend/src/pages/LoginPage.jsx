@@ -34,7 +34,9 @@ export function LoginPage() {
       const role = res.data.user.role;
       if (from) return nav(from, { replace: true });
 
-      if (role === "admin") return nav("/dashboard/admin", { replace: true });
+      if (["admin", "super_admin", "support_admin", "finance_admin"].includes(role)) {
+        return nav("/dashboard/admin", { replace: true });
+      }
       if (role === "user") return nav("/dashboard/user", { replace: true });
 
       // vendor
@@ -113,4 +115,3 @@ export function LoginPage() {
     </div>
   );
 }
-

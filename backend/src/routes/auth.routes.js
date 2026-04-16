@@ -20,7 +20,9 @@ router.post(
 );
 
 router.post("/login", validate(loginSchema), authController.login);
+router.post("/refresh", authController.refresh);
+router.post("/logout", authRequired, authController.logout);
+router.post("/logout-all", authRequired, authController.logoutAll);
 router.get("/me", authRequired, authController.me);
 
 module.exports = router;
-

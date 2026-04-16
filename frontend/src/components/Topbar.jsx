@@ -1,7 +1,9 @@
 import { useAuthStore } from "../context/authStore";
+import * as authService from "../services/authService";
 
 export function Topbar({ title, subtitle, onMenuToggle }) {
   const user = useAuthStore((s) => s.user);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
   const logout = useAuthStore((s) => s.logout);
 
   const initials = user?.name
@@ -9,6 +11,16 @@ export function Topbar({ title, subtitle, onMenuToggle }) {
     .map((part) => part[0])
     .join("")
     .toUpperCase() || "A";
+
+  async function handleLogout() {
+    try {
+      await authService.logout(refreshToken);
+    } catch {
+      // local logout is still the fallback
+    } finally {
+      logout();
+    }
+  }
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
@@ -41,7 +53,7 @@ export function Topbar({ title, subtitle, onMenuToggle }) {
           </div>
           <button
             type="button"
-            onClick={logout}
+            onClick={handleLogout}
             className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:text-sm"
           >
             Logout

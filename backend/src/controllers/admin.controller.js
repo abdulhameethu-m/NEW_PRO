@@ -28,25 +28,49 @@ const listUsers = asyncHandler(async (req, res) => {
   return ok(res, users, "OK");
 });
 
+const listAuditLogs = asyncHandler(async (req, res) => {
+  const logs = await adminService.listAuditLogs({
+    page: Number(req.query.page || 1),
+    limit: Number(req.query.limit || 20),
+    action: req.query.action,
+    actorRole: req.query.actorRole,
+    entityType: req.query.entityType,
+    status: req.query.status,
+  });
+  return ok(res, logs, "OK");
+});
+
 const setUserStatus = asyncHandler(async (req, res) => {
   const { status } = req.body || {};
   if (!status) throw new AppError("Missing status", 400, "VALIDATION_ERROR");
-  const user = await adminService.setUserStatus(req.params.id, status);
+  const user = await adminService.setUserStatus(req.params.id, status, req.user, {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  });
   return ok(res, user, "User updated");
 });
 
 const toggleUserBlocked = asyncHandler(async (req, res) => {
-  const user = await adminService.toggleUserBlocked(req.params.id);
+  const user = await adminService.toggleUserBlocked(req.params.id, req.user, {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  });
   return ok(res, user, "User status updated");
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
-  const result = await adminService.deleteUser(req.params.id);
+  const result = await adminService.deleteUser(req.params.id, req.user, {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  });
   return ok(res, result, "User deleted");
 });
 
 const approveVendor = asyncHandler(async (req, res) => {
-  const vendor = await adminService.approveVendor(req.params.id);
+  const vendor = await adminService.approveVendor(req.params.id, req.user, {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  });
   return ok(res, vendor, "Vendor approved");
 });
 
@@ -55,12 +79,18 @@ const rejectVendor = asyncHandler(async (req, res) => {
   if (reason && typeof reason !== "string") {
     throw new AppError("Invalid rejection reason", 400, "VALIDATION_ERROR");
   }
-  const vendor = await adminService.rejectVendor(req.params.id, { reason });
+  const vendor = await adminService.rejectVendor(req.params.id, { reason }, req.user, {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  });
   return ok(res, vendor, "Vendor rejected");
 });
 
 const removeVendor = asyncHandler(async (req, res) => {
-  const result = await adminService.removeVendor(req.params.id);
+  const result = await adminService.removeVendor(req.params.id, req.user, {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  });
   return ok(res, result, "Vendor removed and privileges revoked");
 });
 
@@ -79,7 +109,10 @@ const listOrders = asyncHandler(async (req, res) => {
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body || {};
   if (!status) throw new AppError("Missing status", 400, "VALIDATION_ERROR");
-  const order = await adminService.updateOrderStatus(req.params.id, status);
+  const order = await adminService.updateOrderStatus(req.params.id, status, req.user, {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  });
   return ok(res, order, "Order updated");
 });
 
@@ -89,6 +122,7 @@ module.exports = {
   listVendors,
   getVendorDetails,
   listUsers,
+  listAuditLogs,
   setUserStatus,
   toggleUserBlocked,
   deleteUser,

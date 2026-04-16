@@ -14,6 +14,7 @@ export function Layout() {
   const isAdminRoute =
     location.pathname === "/dashboard/admin" ||
     location.pathname.startsWith("/admin");
+  const isVendorWorkspace = location.pathname.startsWith("/vendor/");
 
   useEffect(() => {
     if (isDarkMode) {
@@ -25,7 +26,7 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900 transition-colors dark:bg-slate-950 dark:text-white">
-      {!isAdminRoute ? (
+      {!isAdminRoute && !isVendorWorkspace ? (
         <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
         <div className="mx-auto max-w-7xl px-3 py-2 sm:px-4 sm:py-3">
           <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-3">
@@ -78,11 +79,11 @@ export function Layout() {
         </header>
       ) : null}
 
-      <main className={isAdminRoute ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:py-8"}>
+      <main className={isAdminRoute || isVendorWorkspace ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:py-8"}>
         <Outlet />
       </main>
 
-      {!isAdminRoute ? <Footer /> : null}
+      {!isAdminRoute && !isVendorWorkspace ? <Footer /> : null}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 const express = require("express");
-const { authRequired, requireRole } = require("../middleware/auth");
+const { authRequired, requireRole, requirePermission } = require("../middleware/auth");
 const adminController = require("../controllers/admin.controller");
 const productController = require("../controllers/product.controller");
 const { validate } = require("../middleware/validate");
+const { ADMIN_ROLES } = require("../utils/adminPermissions");
 const {
   createProductSchema,
   updateProductSchema,
@@ -11,40 +12,41 @@ const {
 
 const router = express.Router();
 
-router.use(authRequired, requireRole("admin"));
+router.use(authRequired, requireRole(...ADMIN_ROLES));
 
-router.get("/dashboard", adminController.dashboard);
-router.get("/analytics", adminController.analytics);
+router.get("/dashboard", requirePermission("dashboard:read"), adminController.dashboard);
+router.get("/analytics", requirePermission("analytics:read"), adminController.analytics);
+router.get("/audit-logs", requirePermission("audit:read"), adminController.listAuditLogs);
 
-router.get("/users", adminController.listUsers);
-router.patch("/users/:id/block", adminController.toggleUserBlocked);
-router.delete("/users/:id", adminController.deleteUser);
+router.get("/users", requirePermission("users:read"), adminController.listUsers);
+router.patch("/users/:id/block", requirePermission("users:update"), adminController.toggleUserBlocked);
+router.delete("/users/:id", requirePermission("users:delete"), adminController.deleteUser);
 
 // Backward-compatible user status endpoint
-router.put("/user/:id/status", adminController.setUserStatus);
+router.put("/user/:id/status", requirePermission("users:update"), adminController.setUserStatus);
 
-router.get("/sellers", adminController.listVendors);
-router.patch("/sellers/:id/approve", adminController.approveVendor);
-router.patch("/sellers/:id/reject", express.json(), adminController.rejectVendor);
-router.get("/sellers/:id", adminController.getVendorDetails);
+router.get("/sellers", requirePermission("vendors:read"), adminController.listVendors);
+router.patch("/sellers/:id/approve", requirePermission("vendors:approve"), adminController.approveVendor);
+router.patch("/sellers/:id/reject", requirePermission("vendors:reject"), express.json(), adminController.rejectVendor);
+router.get("/sellers/:id", requirePermission("vendors:read"), adminController.getVendorDetails);
 
 // Backward-compatible vendor routes
-router.get("/vendors", adminController.listVendors);
-router.get("/vendor/:id", adminController.getVendorDetails);
-router.put("/vendor/:id/approve", adminController.approveVendor);
-router.put("/vendor/:id/reject", express.json(), adminController.rejectVendor);
-router.delete("/vendor/:id", adminController.removeVendor);
+router.get("/vendors", requirePermission("vendors:read"), adminController.listVendors);
+router.get("/vendor/:id", requirePermission("vendors:read"), adminController.getVendorDetails);
+router.put("/vendor/:id/approve", requirePermission("vendors:approve"), adminController.approveVendor);
+router.put("/vendor/:id/reject", requirePermission("vendors:reject"), express.json(), adminController.rejectVendor);
+router.delete("/vendor/:id", requirePermission("vendors:delete"), adminController.removeVendor);
 
-router.get("/orders", adminController.listOrders);
-router.patch("/orders/:id/status", express.json(), adminController.updateOrderStatus);
+router.get("/orders", requirePermission("orders:read"), adminController.listOrders);
+router.patch("/orders/:id/status", requirePermission("orders:update"), express.json(), adminController.updateOrderStatus);
 
-router.get("/products", productController.getProducts);
-router.post("/products", validate(createProductSchema), productController.createProduct);
-router.patch("/products/:id", validate(updateProductSchema), productController.updateProduct);
-router.delete("/products/:id", productController.deleteProduct);
-router.get("/products/pending", productController.getPendingProducts);
-router.patch("/products/:id/approve", productController.approveProduct);
-router.patch("/products/:id/reject", validate(rejectProductSchema), productController.rejectProduct);
-router.get("/products/stats", productController.getProductStats);
+router.get("/products", requirePermission("products:read"), productController.getProducts);
+router.post("/products", requirePermission("products:create"), validate(createProductSchema), productController.createProduct);
+router.patch("/products/:id", requirePermission("products:update"), validate(updateProductSchema), productController.updateProduct);
+router.delete("/products/:id", requirePermission("products:delete"), productController.deleteProduct);
+router.get("/products/pending", requirePermission("products:read"), productController.getPendingProducts);
+router.patch("/products/:id/approve", requirePermission("products:approve"), productController.approveProduct);
+router.patch("/products/:id/reject", requirePermission("products:reject"), validate(rejectProductSchema), productController.rejectProduct);
+router.get("/products/stats", requirePermission("products:read"), productController.getProductStats);
 
 module.exports = router;

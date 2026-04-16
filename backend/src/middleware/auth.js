@@ -1,5 +1,6 @@
-const jwt = require("jsonwebtoken");
 const { AppError } = require("../utils/AppError");
+const { verifyAccessToken } = require("../utils/jwt");
+const { hasPermission } = require("../utils/adminPermissions");
 
 function getTokenFromReq(req) {
   const header = req.headers.authorization || "";
@@ -13,7 +14,7 @@ function authRequired(req, res, next) {
   if (!token) return next(new AppError("Unauthorized", 401, "UNAUTHORIZED"));
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const payload = verifyAccessToken(token);
     req.user = payload;
     next();
   } catch (e) {
@@ -31,5 +32,14 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authRequired, requireRole };
+function requirePermission(permission) {
+  return (req, res, next) => {
+    if (!req.user) return next(new AppError("Unauthorized", 401, "UNAUTHORIZED"));
+    if (!hasPermission(req.user.role, permission)) {
+      return next(new AppError("Forbidden", 403, "FORBIDDEN"));
+    }
+    next();
+  };
+}
 
+module.exports = { authRequired, requireRole, requirePermission };

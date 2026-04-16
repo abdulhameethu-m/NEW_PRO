@@ -16,24 +16,34 @@ function save(state) {
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ token: state.token, user: state.user })
+      JSON.stringify({
+        token: state.token,
+        refreshToken: state.refreshToken,
+        user: state.user,
+      })
     );
   } catch {
     // ignore
   }
 }
 
-const initial = load() || { token: null, user: null };
+const initial = load() || { token: null, refreshToken: null, user: null };
 
 export const useAuthStore = create((set, get) => ({
   token: initial.token,
+  refreshToken: initial.refreshToken,
   user: initial.user,
-  setAuth: ({ token, user }) => {
-    set({ token, user });
-    save({ token, user });
+  setAuth: ({ token, accessToken, refreshToken, user }) => {
+    const nextState = {
+      token: accessToken || token || null,
+      refreshToken: refreshToken || null,
+      user,
+    };
+    set(nextState);
+    save(nextState);
   },
   logout: () => {
-    set({ token: null, user: null });
+    set({ token: null, refreshToken: null, user: null });
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -41,4 +51,3 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 }));
-

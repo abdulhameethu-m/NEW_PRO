@@ -24,3 +24,12 @@ export async function getMe() {
   return data;
 }
 
+export async function logout(refreshToken) {
+  const { data } = await api.post("/api/auth/logout", { refreshToken });
+  return data;
+}
+
+export async function logoutAll() {
+  const { data } = await api.post("/api/auth/logout-all");
+  return data;
+}

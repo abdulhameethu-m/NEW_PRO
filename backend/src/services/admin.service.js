@@ -4,6 +4,7 @@ const userRepo = require("../repositories/user.repository");
 const productRepo = require("../repositories/product.repository");
 const orderRepo = require("../repositories/order.repository");
 const { ORDER_STATUS } = require("../models/Order");
+const auditService = require("./audit.service");
 
 async function getDashboardOverview() {
   const [totalUsers, totalSellers, totalOrders, revenue, pendingProducts, pendingSellers] = await Promise.all([
@@ -69,30 +70,53 @@ async function listUsers({ role } = {}) {
   return await userRepo.listUsers({ role });
 }
 
-async function setUserStatus(userId, status) {
+async function listAuditLogs(filters = {}) {
+  return await auditService.list(filters);
+}
+
+async function setUserStatus(userId, status, actor, meta) {
   if (!["active", "disabled"].includes(status)) {
     throw new AppError("Invalid user status", 400, "VALIDATION_ERROR");
   }
   const user = await userRepo.updateById(userId, { status });
   if (!user) throw new AppError("User not found", 404, "NOT_FOUND");
+  await auditService.log({
+    actor,
+    action: "admin.user.status_updated",
+    entityType: "User",
+    entityId: user._id,
+    metadata: { status },
+    ipAddress: meta?.ipAddress,
+    userAgent: meta?.userAgent,
+  });
   return user;
 }
 
-async function toggleUserBlocked(userId) {
+async function toggleUserBlocked(userId, actor, meta) {
   const user = await userRepo.findById(userId);
   if (!user) throw new AppError("User not found", 404, "NOT_FOUND");
-  if (user.role === "admin") {
+  if (["admin", "super_admin", "support_admin", "finance_admin"].includes(user.role)) {
     throw new AppError("Admin accounts cannot be blocked", 400, "INVALID_OPERATION");
   }
 
   const nextStatus = user.status === "disabled" ? "active" : "disabled";
-  return await userRepo.updateById(userId, { status: nextStatus });
+  const updated = await userRepo.updateById(userId, { status: nextStatus });
+  await auditService.log({
+    actor,
+    action: "admin.user.block_toggled",
+    entityType: "User",
+    entityId: updated._id,
+    metadata: { status: nextStatus },
+    ipAddress: meta?.ipAddress,
+    userAgent: meta?.userAgent,
+  });
+  return updated;
 }
 
-async function deleteUser(userId) {
+async function deleteUser(userId, actor, meta) {
   const user = await userRepo.findById(userId);
   if (!user) throw new AppError("User not found", 404, "NOT_FOUND");
-  if (user.role === "admin") {
+  if (["admin", "super_admin", "support_admin", "finance_admin"].includes(user.role)) {
     throw new AppError("Admin accounts cannot be deleted", 400, "INVALID_OPERATION");
   }
 
@@ -102,31 +126,59 @@ async function deleteUser(userId) {
   }
 
   await userRepo.deleteById(userId);
+  await auditService.log({
+    actor,
+    action: "admin.user.deleted",
+    entityType: "User",
+    entityId: userId,
+    metadata: { role: user.role },
+    ipAddress: meta?.ipAddress,
+    userAgent: meta?.userAgent,
+  });
   return { _id: userId };
 }
 
-async function approveVendor(vendorId) {
+async function approveVendor(vendorId, actor, meta) {
   const vendor = await vendorRepo.findById(vendorId);
   if (!vendor) throw new AppError("Vendor not found", 404, "NOT_FOUND");
   if (vendor.status === "approved") return vendor;
 
-  return await vendorRepo.updateById(vendorId, {
+  const updated = await vendorRepo.updateById(vendorId, {
     status: "approved",
     rejectionReason: null,
   });
+  await auditService.log({
+    actor,
+    action: "admin.vendor.approved",
+    entityType: "Vendor",
+    entityId: updated._id,
+    ipAddress: meta?.ipAddress,
+    userAgent: meta?.userAgent,
+  });
+  return updated;
 }
 
-async function rejectVendor(vendorId, { reason } = {}) {
+async function rejectVendor(vendorId, { reason } = {}, actor, meta) {
   const vendor = await vendorRepo.findById(vendorId);
   if (!vendor) throw new AppError("Vendor not found", 404, "NOT_FOUND");
 
-  return await vendorRepo.updateById(vendorId, {
+  const updated = await vendorRepo.updateById(vendorId, {
     status: "rejected",
     rejectionReason: reason || "Rejected by admin",
   });
+  await auditService.log({
+    actor,
+    action: "admin.vendor.rejected",
+    entityType: "Vendor",
+    entityId: updated._id,
+    metadata: { reason: reason || "Rejected by admin" },
+    ipAddress: meta?.ipAddress,
+    userAgent: meta?.userAgent,
+  });
+  return updated;
 }
 
-async function removeVendor(vendorId) {
+async function removeVendor(vendorId, actor, meta) {
   const vendor = await vendorRepo.findById(vendorId);
   if (!vendor) throw new AppError("Vendor not found", 404, "NOT_FOUND");
 
@@ -138,6 +190,15 @@ async function removeVendor(vendorId) {
   const updatedUser = await userRepo.updateById(userId, { role: "user" });
   if (!updatedUser) throw new AppError("Linked user not found", 404, "NOT_FOUND");
 
+  await auditService.log({
+    actor,
+    action: "admin.vendor.removed",
+    entityType: "Vendor",
+    entityId: vendorId,
+    metadata: { linkedUserId: String(userId) },
+    ipAddress: meta?.ipAddress,
+    userAgent: meta?.userAgent,
+  });
   return { user: updatedUser };
 }
 
@@ -145,7 +206,7 @@ async function listOrders(filters = {}) {
   return await orderRepo.list(filters);
 }
 
-async function updateOrderStatus(orderId, status) {
+async function updateOrderStatus(orderId, status, actor, meta) {
   if (!ORDER_STATUS.includes(status)) {
     throw new AppError("Invalid order status", 400, "VALIDATION_ERROR");
   }
@@ -153,7 +214,17 @@ async function updateOrderStatus(orderId, status) {
   const order = await orderRepo.findById(orderId);
   if (!order) throw new AppError("Order not found", 404, "NOT_FOUND");
 
-  return await orderRepo.updateStatus(orderId, status);
+  const updated = await orderRepo.updateStatus(orderId, status);
+  await auditService.log({
+    actor,
+    action: "admin.order.status_updated",
+    entityType: "Order",
+    entityId: updated._id,
+    metadata: { status },
+    ipAddress: meta?.ipAddress,
+    userAgent: meta?.userAgent,
+  });
+  return updated;
 }
 
 module.exports = {
@@ -162,6 +233,7 @@ module.exports = {
   listVendors,
   getVendorDetails,
   listUsers,
+  listAuditLogs,
   setUserStatus,
   toggleUserBlocked,
   deleteUser,

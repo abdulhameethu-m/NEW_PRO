@@ -12,15 +12,41 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshPromise = null;
+
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err) => {
     const status = err?.response?.status;
-    if (status === 401) {
-      // keep UX simple: clear auth on hard 401
-      useAuthStore.getState().logout();
+    const originalRequest = err?.config;
+
+    if (status === 401 && originalRequest && !originalRequest._retry) {
+      const { refreshToken, setAuth, logout } = useAuthStore.getState();
+      if (!refreshToken) {
+        logout();
+        return Promise.reject(err);
+      }
+
+      originalRequest._retry = true;
+
+      try {
+        refreshPromise =
+          refreshPromise ||
+          api.post("/api/auth/refresh", { refreshToken }, { headers: { Authorization: undefined } });
+
+        const response = await refreshPromise;
+        refreshPromise = null;
+        setAuth(response.data.data);
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${response.data.data.accessToken || response.data.data.token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        refreshPromise = null;
+        logout();
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(err);
   }
 );
-

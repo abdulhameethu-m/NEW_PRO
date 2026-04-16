@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../context/authStore";
+import * as authService from "../services/authService";
 
 /**
  * UserMenu Component
@@ -19,6 +20,7 @@ import { useAuthStore } from "../context/authStore";
  */
 export function UserMenu() {
   const user = useAuthStore((s) => s.user);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   
@@ -59,10 +61,16 @@ export function UserMenu() {
     }
   }, [isOpen]);
 
-  const handleLogout = () => {
-    logout();
-    setIsOpen(false);
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await authService.logout(refreshToken);
+    } catch {
+      // local logout is still the fallback
+    } finally {
+      logout();
+      setIsOpen(false);
+      navigate("/login");
+    }
   };
 
   const handleMenuClick = (path) => {

@@ -42,6 +42,25 @@ const vendorSchema = new mongoose.Schema(
 
     // Step 4
     shopName: { type: String, trim: true, maxlength: 160 },
+    storeSlug: { type: String, trim: true, lowercase: true, sparse: true, index: true },
+    storeDescription: { type: String, trim: true, maxlength: 1200 },
+    supportEmail: { type: String, trim: true, lowercase: true, maxlength: 160 },
+    supportPhone: { type: String, trim: true, maxlength: 30 },
+    logoUrl: { type: String, trim: true, maxlength: 500 },
+    bannerUrl: { type: String, trim: true, maxlength: 500 },
+    payoutSchedule: {
+      type: String,
+      enum: ["weekly", "biweekly", "monthly"],
+      default: "weekly",
+    },
+    defaultCourier: { type: String, trim: true, maxlength: 80 },
+    lowStockThreshold: { type: Number, min: 0, default: 10 },
+    notificationPreferences: {
+      emailOrders: { type: Boolean, default: true },
+      emailPayouts: { type: Boolean, default: true },
+      pushOrders: { type: Boolean, default: true },
+      pushSystem: { type: Boolean, default: true },
+    },
     shopImages: [
       {
         url: { type: String, required: true },
@@ -55,6 +74,7 @@ const vendorSchema = new mongoose.Schema(
     stepCompleted: { type: Number, default: 0, min: 0, max: 4, index: true },
     status: { type: String, enum: VENDOR_STATUS, default: "draft", index: true },
     rejectionReason: { type: String, trim: true, maxlength: 500 },
+    lastActiveAt: { type: Date },
   },
   { timestamps: true }
 );
@@ -63,4 +83,3 @@ module.exports = {
   Vendor: mongoose.model("Vendor", vendorSchema),
   VENDOR_STATUS,
 };
-
