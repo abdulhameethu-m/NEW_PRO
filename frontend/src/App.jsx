@@ -20,6 +20,8 @@ import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { AdminSellersPage } from "./pages/AdminSellersPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { AdminProductsPage } from "./pages/AdminProductsPage";
+import { AdminProductCreate } from "./pages/AdminProductCreate";
+import { AdminProductEdit } from "./pages/AdminProductEdit";
 import { AdminOrdersPage } from "./pages/AdminOrdersPage";
 import { AdminAnalyticsPage } from "./pages/AdminAnalyticsPage";
 import { AdminSettingsPage } from "./pages/AdminSettingsPage";
@@ -109,8 +111,8 @@ export default function App() {
               <Route path="sellers" element={<AdminSellersPage />} />
               <Route path="sellers/:id" element={<AdminVendorDetailsPage />} />
               <Route path="products" element={<AdminProductsPage />} />
-              <Route path="products/create" element={<ProductFormPage />} />
-              <Route path="products/:productId/edit" element={<ProductFormPage />} />
+              <Route path="products/create" element={<AdminProductCreate />} />
+              <Route path="products/:id/edit" element={<AdminProductEdit />} />
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />

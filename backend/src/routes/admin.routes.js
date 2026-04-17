@@ -41,13 +41,17 @@ router.delete("/vendor/:id", requirePermission("vendors:delete"), adminControlle
 router.get("/orders", requirePermission("orders:read"), adminController.listOrders);
 router.patch("/orders/:id/status", requirePermission("orders:update"), express.json(), adminController.updateOrderStatus);
 
+// Products routes - IMPORTANT: Specific routes must come before parameter routes
 router.get("/products", requirePermission("products:read"), productController.getProducts);
+router.get("/products/stats", requirePermission("products:read"), productController.getProductStats);
+router.get("/products/pending", requirePermission("products:read"), productController.getPendingProducts);
 router.post("/products", requirePermission("products:create"), validate(createProductSchema), productController.createProduct);
+
+// Parameter-based product routes (after specific routes)
+router.get("/products/:id", requirePermission("products:read"), productController.getProductById);
 router.patch("/products/:id", requirePermission("products:update"), validate(updateProductSchema), productController.updateProduct);
 router.delete("/products/:id", requirePermission("products:delete"), productController.deleteProduct);
-router.get("/products/pending", requirePermission("products:read"), productController.getPendingProducts);
 router.patch("/products/:id/approve", requirePermission("products:approve"), productController.approveProduct);
 router.patch("/products/:id/reject", requirePermission("products:reject"), validate(rejectProductSchema), productController.rejectProduct);
-router.get("/products/stats", requirePermission("products:read"), productController.getProductStats);
 
 module.exports = router;

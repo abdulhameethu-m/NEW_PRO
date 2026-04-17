@@ -7,8 +7,15 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Get the most current token from the store
+  const { token } = useAuthStore.getState();
+  
+  // Always add token if it exists, even if no headers exist yet
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
   return config;
 });
 
@@ -19,6 +26,14 @@ api.interceptors.response.use(
   async (err) => {
     const status = err?.response?.status;
     const originalRequest = err?.config;
+    const requestPath = originalRequest?.url || "";
+
+    // Don't retry logout/logout-all requests - let them fail naturally
+    // These endpoints now handle 401 gracefully
+    const isAuthEndpoint = requestPath.includes("/api/auth/logout");
+    if (isAuthEndpoint) {
+      return Promise.reject(err);
+    }
 
     if (status === 401 && originalRequest && !originalRequest._retry) {
       const { refreshToken, setAuth, logout } = useAuthStore.getState();

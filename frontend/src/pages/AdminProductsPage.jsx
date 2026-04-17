@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   approveProduct,
+  deleteProduct,
   getProductStats,
   listProducts,
   rejectProduct,
@@ -71,6 +72,21 @@ export function AdminProductsPage() {
     setBusyId(productId);
     try {
       await rejectProduct(productId, rejectReason);
+      setSelectedProduct(null);
+      setRejectReason("");
+      await refresh();
+    } catch (err) {
+      setError(normalizeError(err));
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function handleDelete(productId) {
+    if (!window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
+    setBusyId(productId);
+    try {
+      await deleteProduct(productId);
       setSelectedProduct(null);
       setRejectReason("");
       await refresh();
@@ -172,6 +188,14 @@ export function AdminProductsPage() {
                     >
                       Edit
                     </Link>
+                    <button
+                      type="button"
+                      disabled={busyId === product._id}
+                      onClick={() => handleDelete(product._id)}
+                      className="w-full rounded-xl border border-red-300 px-3 py-2 text-center text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 sm:w-auto"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
 

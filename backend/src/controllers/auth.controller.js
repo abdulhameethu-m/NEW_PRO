@@ -29,11 +29,13 @@ const refresh = asyncHandler(async (req, res) => {
 
 const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.body?.refreshToken;
+  // req.user might be null if authOptional didn't find a token
+  // That's OK - logout service handles it gracefully
   const result = await authService.logout(refreshToken, req.user, {
     ipAddress: req.ip,
     userAgent: req.get("user-agent"),
   });
-  return ok(res, result, "Logged out");
+  return ok(res, result, "Logged out successfully");
 });
 
 const logoutAll = asyncHandler(async (req, res) => {

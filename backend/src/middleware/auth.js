@@ -22,6 +22,26 @@ function authRequired(req, res, next) {
   }
 }
 
+// Optional auth - doesn't throw error if token is missing
+function authOptional(req, res, next) {
+  const token = getTokenFromReq(req);
+  if (!token) {
+    // No token, but continue anyway
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const payload = verifyAccessToken(token);
+    req.user = payload;
+    next();
+  } catch (e) {
+    // Invalid token, but continue anyway
+    req.user = null;
+    next();
+  }
+}
+
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) return next(new AppError("Unauthorized", 401, "UNAUTHORIZED"));
@@ -42,4 +62,4 @@ function requirePermission(permission) {
   };
 }
 
-module.exports = { authRequired, requireRole, requirePermission };
+module.exports = { authRequired, authOptional, requireRole, requirePermission };

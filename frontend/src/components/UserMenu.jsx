@@ -62,14 +62,21 @@ export function UserMenu() {
   }, [isOpen]);
 
   const handleLogout = async () => {
+    const { token, refreshToken: rt } = useAuthStore.getState();
+    
+    // Always try server logout first (even without token it should work now)
     try {
-      await authService.logout(refreshToken);
-    } catch {
-      // local logout is still the fallback
+      // Send both access token (via Authorization header) and refresh token (in body)
+      await authService.logout(rt || "");
+    } catch (error) {
+      // Server logout might fail with 401 if no valid token, but that's OK
+      // Client-side logout will happen anyway
+      console.debug("Server logout response:", error?.response?.status);
     } finally {
+      // Always do client-side logout regardless of server response
       logout();
       setIsOpen(false);
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   };
 

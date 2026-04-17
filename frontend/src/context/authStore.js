@@ -33,21 +33,28 @@ export const useAuthStore = create((set, get) => ({
   token: initial.token,
   refreshToken: initial.refreshToken,
   user: initial.user,
+  isAuthenticated: !!initial.token,
+  
   setAuth: ({ token, accessToken, refreshToken, user }) => {
+    const nextToken = accessToken || token;
     const nextState = {
-      token: accessToken || token || null,
+      token: nextToken || null,
       refreshToken: refreshToken || null,
-      user,
+      user: user || null,
+      isAuthenticated: !!nextToken,
     };
     set(nextState);
     save(nextState);
   },
+  
   logout: () => {
-    set({ token: null, refreshToken: null, user: null });
+    set({ token: null, refreshToken: null, user: null, isAuthenticated: false });
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
       // ignore
     }
   },
+  
+  getToken: () => get().token,
 }));

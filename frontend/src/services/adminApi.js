@@ -60,6 +60,26 @@ export async function listProducts(params = {}) {
   return data;
 }
 
+export async function getProductById(id) {
+  const { data } = await api.get(`/api/admin/products/${id}`);
+  return data;
+}
+
+export async function createProduct(productData) {
+  const { data } = await api.post("/api/admin/products", productData);
+  return data;
+}
+
+export async function updateProduct(id, productData) {
+  const { data } = await api.patch(`/api/admin/products/${id}`, productData);
+  return data;
+}
+
+export async function deleteProduct(id) {
+  const { data } = await api.delete(`/api/admin/products/${id}`);
+  return data;
+}
+
 export async function approveProduct(id) {
   const { data } = await api.patch(`/api/admin/products/${id}/approve`);
   return data;

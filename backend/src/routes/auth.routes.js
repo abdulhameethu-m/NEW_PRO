@@ -1,6 +1,6 @@
 const express = require("express");
 const { validate } = require("../middleware/validate");
-const { authRequired } = require("../middleware/auth");
+const { authRequired, authOptional } = require("../middleware/auth");
 const authController = require("../controllers/auth.controller");
 const { registerSchema, loginSchema } = require("../utils/validators/auth.validation");
 const { AppError } = require("../utils/AppError");
@@ -21,7 +21,8 @@ router.post(
 
 router.post("/login", validate(loginSchema), authController.login);
 router.post("/refresh", authController.refresh);
-router.post("/logout", authRequired, authController.logout);
+// Use authOptional for logout - allows graceful logout even if token is missing
+router.post("/logout", authOptional, authController.logout);
 router.post("/logout-all", authRequired, authController.logoutAll);
 router.get("/me", authRequired, authController.me);
 
