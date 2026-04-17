@@ -16,6 +16,7 @@ router.use(authRequired, requireRole(...ADMIN_ROLES));
 
 router.get("/dashboard", requirePermission("dashboard:read"), adminController.dashboard);
 router.get("/analytics", requirePermission("analytics:read"), adminController.analytics);
+router.get("/daily-revenue", requirePermission("analytics:read"), adminController.dailyRevenue);
 router.get("/audit-logs", requirePermission("audit:read"), adminController.listAuditLogs);
 
 router.get("/users", requirePermission("users:read"), adminController.listUsers);

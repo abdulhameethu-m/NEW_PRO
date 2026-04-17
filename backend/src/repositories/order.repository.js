@@ -230,6 +230,14 @@ class OrderRepository {
       { $sort: { label: 1 } },
     ]);
   }
+
+  async findWithDateRange(startDate, endDate) {
+    return await Order.find({
+      createdAt: { $gte: startDate, $lte: endDate },
+    })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
 }
 
 module.exports = new OrderRepository();

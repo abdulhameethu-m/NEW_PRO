@@ -13,9 +13,9 @@ function asObjectId(id, fieldName) {
 function groupBySeller(items = []) {
   const map = new Map();
   for (const it of items) {
-    const key = String(it.sellerId);
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(it);
+    const key = String(it.sellerId); // Use as map key only
+    if (!map.has(key)) map.set(key, { sellerId: it.sellerId, items: [] }); // Store original ObjectId
+    map.get(key).items.push(it);
   }
   return map;
 }
@@ -53,9 +53,10 @@ class CheckoutService {
     }
 
     const bySeller = groupBySeller(validated);
-    const sellers = Array.from(bySeller.entries()).map(([sellerId, items]) => {
+    const sellers = Array.from(bySeller.entries()).map(([key, sellerData]) => {
+      const items = sellerData.items;
       const subtotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
-      return { sellerId, items, subtotal };
+      return { sellerId: sellerData.sellerId, items, subtotal };
     });
 
     const subtotal = sellers.reduce((sum, s) => sum + s.subtotal, 0);
@@ -74,6 +75,15 @@ class CheckoutService {
   }
 
   async createOrder(userId, { shippingAddress, paymentMethod = "ONLINE" }) {
+    // Validate required fields
+    if (!shippingAddress) {
+      throw new AppError("Shipping address is required", 400, "MISSING_ADDRESS");
+    }
+
+    if (!["ONLINE", "COD"].includes(paymentMethod)) {
+      throw new AppError("Invalid payment method", 400, "INVALID_PAYMENT_METHOD");
+    }
+
     const cart = await cartRepo.findByUserId(userId);
     if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
       throw new AppError("Cart is empty", 400, "EMPTY_CART");
@@ -105,7 +115,18 @@ class CheckoutService {
     const orderPayloads = [];
     const payouts = [];
 
-    for (const [sellerId, items] of bySeller) {
+    for (const [sellerId, sellerData] of bySeller) {
+      const items = sellerData.items;
+      const originalSellerId = sellerData.sellerId;
+      // Clean items to only include fields for Order schema
+      const cleanedItems = items.map((it) => ({
+        productId: it.productId,
+        name: it.name,
+        price: it.price,
+        quantity: it.quantity,
+        image: it.image,
+      }));
+
       const subtotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
       const shippingFee = 0; // Calculate per seller or global
       const taxAmount = 0;
@@ -117,9 +138,9 @@ class CheckoutService {
 
       const orderData = {
         orderNumber,
-        userId,
-        sellerId,
-        items,
+        userId: new mongoose.Types.ObjectId(userId),
+        sellerId: originalSellerId, // Use original ObjectId
+        items: cleanedItems,
         subtotal,
         shippingFee,
         taxAmount,
@@ -147,13 +168,14 @@ class CheckoutService {
       const commission = totalAmount * 0.1;
       const sellerAmount = totalAmount - commission;
 
-      await payoutRepo.create({
+      const payout = await payoutRepo.create({
         sellerId: order.sellerId,
         orderId: order._id,
         amount: sellerAmount,
         commission,
         status: "PENDING",
       });
+      payouts.push(payout);
     }
 
     // Clear cart

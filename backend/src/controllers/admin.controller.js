@@ -116,9 +116,19 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   return ok(res, order, "Order updated");
 });
 
+const dailyRevenue = asyncHandler(async (req, res) => {
+  const days = Number(req.query.days || 7);
+  if (days < 1 || days > 90) {
+    throw new AppError("Days must be between 1 and 90", 400, "VALIDATION_ERROR");
+  }
+  const data = await adminService.getDailyRevenue(days);
+  return ok(res, data, "Daily revenue loaded");
+});
+
 module.exports = {
   dashboard,
   analytics,
+  dailyRevenue,
   listVendors,
   getVendorDetails,
   listUsers,

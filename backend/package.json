@@ -7,6 +7,9 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed:admin": "node src/scripts/seedAdmin.js",
+    "seed:order": "node src/scripts/seedOrder.js",
+    "seed:orders:yesterday": "node src/scripts/seedOrdersYesterday.js",
+    "seed:orders:dates": "node src/scripts/seedOrdersByDate.js",
     "migrate:currency:inr": "node src/scripts/migrateCurrencyToINR.js"
   },
   "keywords": [],

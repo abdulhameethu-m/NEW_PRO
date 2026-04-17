@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getDashboard, getAnalytics } from "../services/adminApi";
+import { getDashboard, getAnalytics, getDailyRevenue } from "../services/adminApi";
+import { DailyRevenueChart } from "../components/DailyRevenueChart";
 import { StatusBadge } from "../components/StatusBadge";
 import { formatCurrency } from "../utils/formatCurrency";
 
@@ -13,6 +14,8 @@ export function AdminDashboardPage() {
   const [error, setError] = useState("");
   const [dashboard, setDashboard] = useState(null);
   const [analytics, setAnalytics] = useState(null);
+  const [dailyRevenue, setDailyRevenue] = useState([]);
+  const [chartDays, setChartDays] = useState(7);
 
   useEffect(() => {
     let alive = true;
@@ -21,13 +24,15 @@ export function AdminDashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [dashboardRes, analyticsRes] = await Promise.all([
+        const [dashboardRes, analyticsRes, dailyRevenueRes] = await Promise.all([
           getDashboard(),
           getAnalytics(),
+          getDailyRevenue(chartDays),
         ]);
         if (!alive) return;
         setDashboard(dashboardRes.data);
         setAnalytics(analyticsRes.data);
+        setDailyRevenue(Array.isArray(dailyRevenueRes.data) ? dailyRevenueRes.data : []);
       } catch (err) {
         if (alive) setError(normalizeError(err));
       } finally {
@@ -38,7 +43,7 @@ export function AdminDashboardPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [chartDays]);
 
   const totals = dashboard?.totals || {};
   const queues = dashboard?.queues || {};
@@ -62,6 +67,34 @@ export function AdminDashboardPage() {
           value={loading ? "..." : formatCurrency(totals.revenue || 0)}
           tone="emerald"
         />
+      </section>
+
+      {/* Daily Revenue Chart Section */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white sm:text-lg">Daily Revenue</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Revenue ups and downs</p>
+          </div>
+          <div className="flex gap-2">
+            {[7, 14, 30].map((days) => (
+              <button
+                key={days}
+                onClick={() => setChartDays(days)}
+                className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
+                  chartDays === days
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                }`}
+              >
+                {days}d
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-6">
+          <DailyRevenueChart data={dailyRevenue} loading={loading} type="bar" />
+        </div>
       </section>
 
       <section className="grid min-w-0 max-w-full gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)]">

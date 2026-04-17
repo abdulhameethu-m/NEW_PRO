@@ -1,6 +1,7 @@
 export {
   getDashboard,
   getAnalytics,
+  getDailyRevenue,
   listUsers,
   toggleUserBlock,
   deleteUser,

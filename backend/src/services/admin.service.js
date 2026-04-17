@@ -56,6 +56,34 @@ async function getAnalytics() {
   };
 }
 
+async function getDailyRevenue(days = 7) {
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+
+  const orders = await orderRepo.findWithDateRange(startDate, endDate);
+
+  // Group by day
+  const dailyData = {};
+  for (let i = 0; i < days; i++) {
+    const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toISOString().split("T")[0];
+    dailyData[dateStr] = { date: dateStr, revenue: 0, orders: 0 };
+  }
+
+  // Populate data from orders
+  for (const order of orders) {
+    const dateStr = order.createdAt.toISOString().split("T")[0];
+    if (dailyData[dateStr]) {
+      if (["Delivered", "Shipped", "Packed"].includes(order.status)) {
+        dailyData[dateStr].revenue += order.totalAmount || 0;
+      }
+      dailyData[dateStr].orders += 1;
+    }
+  }
+
+  return Object.values(dailyData).sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
 async function listVendors({ status } = {}) {
   return await vendorRepo.listVendors({ status });
 }
@@ -230,6 +258,7 @@ async function updateOrderStatus(orderId, status, actor, meta) {
 module.exports = {
   getDashboardOverview,
   getAnalytics,
+  getDailyRevenue,
   listVendors,
   getVendorDetails,
   listUsers,

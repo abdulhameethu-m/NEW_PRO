@@ -10,6 +10,11 @@ export async function getAnalytics() {
   return data;
 }
 
+export async function getDailyRevenue(days = 7) {
+  const { data } = await api.get("/api/admin/daily-revenue", { params: { days } });
+  return data;
+}
+
 export async function listUsers(params = {}) {
   const { data } = await api.get("/api/admin/users", { params });
   return data;

@@ -42,7 +42,13 @@ const orderSchema = new mongoose.Schema(
     },
     items: {
       type: [orderItemSchema],
-      default: [],
+      required: true,
+      validate: {
+        validator: function(arr) {
+          return arr && arr.length > 0;
+        },
+        message: "Order must have at least one item",
+      },
     },
     subtotal: { type: Number, required: true, min: 0, default: 0 },
     shippingFee: { type: Number, min: 0, default: 0 },
@@ -79,14 +85,14 @@ const orderSchema = new mongoose.Schema(
       default: "PENDING",
     },
     shippingAddress: {
-      fullName: { type: String, trim: true },
-      phone: { type: String, trim: true },
-      line1: { type: String, trim: true },
-      line2: { type: String, trim: true },
-      city: { type: String, trim: true },
-      state: { type: String, trim: true },
-      postalCode: { type: String, trim: true },
-      country: { type: String, trim: true },
+      fullName: { type: String, required: true, trim: true },
+      phone: { type: String, required: true, trim: true },
+      line1: { type: String, required: true, trim: true },
+      line2: { type: String, allowed: true, trim: true },
+      city: { type: String, required: true, trim: true },
+      state: { type: String, required: true, trim: true },
+      postalCode: { type: String, required: true, trim: true },
+      country: { type: String, required: true, trim: true },
     },
     timeline: [
       {
